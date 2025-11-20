@@ -118,7 +118,9 @@ def print_performance_comparison(strategy_returns: pd.Series,
                                benchmark_returns: pd.Series,
                                strategy_name: str,
                                benchmark_name: str = 'BTC Buy & Hold',
-                               freq: int = 365) -> Tuple[Dict[str, float], Dict[str, float]]:
+                               freq: int = 365,
+                               initial_capital: float = 10000,
+                               strategy_costs: pd.Series = None) -> Tuple[Dict[str, float], Dict[str, float]]:
     """Print standardized performance comparison between strategy and benchmark"""
 
     strategy_metrics = calculate_all_performance_metrics(strategy_returns, freq)
@@ -128,12 +130,36 @@ def print_performance_comparison(strategy_returns: pd.Series,
     strategy_beta = calculate_beta(strategy_returns, benchmark_returns)
     strategy_metrics['beta'] = strategy_beta
 
-    print(f"\n{'='*70}")
-    print(f"PERFORMANCE COMPARISON: {strategy_name} vs {benchmark_name}")
-    print(f"{'='*70}")
+    # Calculate portfolio values
+    strategy_final_value = initial_capital * strategy_metrics['final_value']
+    benchmark_final_value = initial_capital * benchmark_metrics['final_value']
+    strategy_profit = strategy_final_value - initial_capital
+    benchmark_profit = benchmark_final_value - initial_capital
 
-    print(f"{'Metric':<20} {'Strategy':<15} {'Benchmark':<15} {'Difference':<15}")
-    print(f"{'-'*70}")
+    # Calculate total costs if provided
+    total_strategy_costs = 0
+    if strategy_costs is not None and not strategy_costs.empty:
+        total_strategy_costs = strategy_costs.sum() * initial_capital
+
+    print(f"\n{'='*80}")
+    print(f"PERFORMANCE COMPARISON: {strategy_name} vs {benchmark_name}")
+    print(f"{'='*80}")
+
+    # Portfolio Values Section
+    print(f"\n📊 PORTFOLIO VALUES")
+    print(f"{'Metric':<25} {'Strategy':<20} {'Benchmark':<20} {'Difference':<15}")
+    print(f"{'-'*80}")
+    print(f"{'Initial Capital':<25} ${initial_capital:>18,.2f} ${initial_capital:>18,.2f} {'$0.00':<15}")
+    print(f"{'Final Portfolio Value':<25} ${strategy_final_value:>18,.2f} ${benchmark_final_value:>18,.2f} ${(strategy_final_value - benchmark_final_value):>+13,.2f}")
+    print(f"{'Total Profit/Loss':<25} ${strategy_profit:>18,.2f} ${benchmark_profit:>18,.2f} ${(strategy_profit - benchmark_profit):>+13,.2f}")
+    if total_strategy_costs > 0:
+        print(f"{'Total Trading Costs':<25} ${total_strategy_costs:>18,.2f} ${'0.00':>18} ${total_strategy_costs:>+13,.2f}")
+        net_strategy_profit = strategy_profit - total_strategy_costs
+        print(f"{'Net Profit (After Costs)':<25} ${net_strategy_profit:>18,.2f} ${benchmark_profit:>18,.2f} ${(net_strategy_profit - benchmark_profit):>+13,.2f}")
+
+    print(f"\n📈 PERFORMANCE METRICS")
+    print(f"{'Metric':<25} {'Strategy':<20} {'Benchmark':<20} {'Difference':<15}")
+    print(f"{'-'*80}")
 
     metrics = [
         ('Total Return', 'total_return', '{:.2%}'),
@@ -176,9 +202,9 @@ def print_performance_comparison(strategy_returns: pd.Series,
 
         strat_str = fmt.format(strat_val) if not np.isnan(strat_val) else "N/A"
 
-        print(f"{metric_name:<20} {strat_str:<15} {bench_str:<15} {diff_str:<15}")
+        print(f"{metric_name:<25} {strat_str:<20} {bench_str:<20} {diff_str:<15}")
 
-    print(f"{'='*70}")
+    print(f"{'='*80}")
 
     # Risk-adjusted performance summary
     if not np.isnan(strategy_metrics['sharpe']) and not np.isnan(benchmark_metrics['sharpe']):

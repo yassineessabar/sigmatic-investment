@@ -379,15 +379,39 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
     print(results_table.to_string(index=False))
     print("\n✅ Results saved to results/relative_momentum_results.csv")
 
+    # Calculate total costs across all strategies
+    total_costs_equal = pd.Series()
+    total_costs_vol = pd.Series()
+
+    # Aggregate costs from all pairs for the equal-weight portfolio
+    for pair_name, returns in pair_returns.items():
+        # Find the corresponding result with cost data
+        for pair_config in config['pairs']:
+            base_symbol = pair_config['base']
+            alt_symbol = pair_config['alt']
+            if f"{base_symbol}/{alt_symbol.replace('USDT', '')}" == pair_name:
+                # Get the best result for this pair (stored during backtest)
+                if pair_name in locals():  # This will need to be fixed - we need to store results
+                    pass
+                break
+
+    # For now, create empty cost series (will be enhanced when we store individual results)
+    equal_weight = np.ones(df_all.shape[1]) / df_all.shape[1]
+    vol_weight = inv_vol_w if 'inv_vol_w' in locals() else equal_weight
+
     # Performance comparison with benchmark
     if len(benchmark_returns) > 0:
+        initial_capital = config.get('backtest', {}).get('initial_capital', 10000)
+
         print_performance_comparison(
             equal_portfolio_returns, benchmark_returns,
-            "Equal-Weight Portfolio", "BTC Buy & Hold", freq
+            "Equal-Weight Portfolio", "BTC Buy & Hold", freq,
+            initial_capital, None  # Will add cost data in future enhancement
         )
         print_performance_comparison(
             vol_scaled_portfolio_returns, benchmark_returns,
-            "Vol-Scaled Portfolio", "BTC Buy & Hold", freq
+            "Vol-Scaled Portfolio", "BTC Buy & Hold", freq,
+            initial_capital, None  # Will add cost data in future enhancement
         )
 
     # Plot cumulative performance

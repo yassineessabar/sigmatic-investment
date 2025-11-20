@@ -230,7 +230,10 @@ def backtest_relative_momentum_pair(
         'final_performance': cumulative_returns.iloc[-1],
         'returns': aligned_data['net_ret'],
         'cumulative': cumulative_returns,
-        'weights': aligned_data[['btc_weight', 'alt_weight']].copy()
+        'weights': aligned_data[['btc_weight', 'alt_weight']].copy(),
+        'trading_costs': aligned_data['trading_costs'],
+        'funding_costs': aligned_data.get('funding_costs', pd.Series()),
+        'total_costs': aligned_data['trading_costs'] + aligned_data.get('funding_costs', 0)
     }
 
 
