@@ -1,0 +1,95 @@
+version: "3.8"
+
+services:
+  data-collector:
+    build: .
+    environment:
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+    command: python data/collector.py
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  signal-engine:
+    build: .
+    environment:
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+    command: python src/strategies/run_signals.py
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - data-collector
+
+  execution-engine:
+    build: .
+    environment:
+      - BINANCE_API_KEY=${BINANCE_API_KEY}
+      - BINANCE_API_SECRET=${BINANCE_API_SECRET}
+    command: python src/execution/order_router.py
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - signal-engine
+
+  backtest-runner:
+    build: .
+    command: python scripts/run_backtest.py
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+      - ./results:/app/results
+    profiles:
+      - backtest
+
+  research-notebook:
+    image: jupyter/scipy-notebook:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./research:/home/jovyan/work
+      - ./data:/home/jovyan/work/data
+      - ./src:/home/jovyan/work/src
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    command: start-notebook.sh --NotebookApp.token=''
+    profiles:
+      - research
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  monitoring:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    profiles:
+      - monitoring
+
+volumes:
+  redis_data:
+  grafana_data:
+
+networks:
+  default:
+    name: neutral-strat-network
