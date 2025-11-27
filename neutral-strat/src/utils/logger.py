@@ -1,97 +1,85 @@
+"""
+Logging Configuration
+Sets up logging for the trading system
+"""
+
 import logging
 import logging.handlers
 import os
-from typing import Dict
+from typing import Dict, Any
 from pathlib import Path
 
 
-def setup_logging(config: Dict):
-    log_config = config.get('logging', {})
-    log_level = log_config.get('level', 'INFO').upper()
-    log_file = log_config.get('file', 'logs/trading.log')
+def setup_logging(config: Dict[str, Any] = None):
+    """Setup logging configuration"""
+    if config is None:
+        config = {}
 
-    log_path = Path(log_file)
-    log_path.parent.mkdir(parents=True, exist_ok=True)
+    # Default configuration
+    log_level = config.get('level', 'INFO')
+    log_file = config.get('file', 'logs/trading.log')
+    console_logging = config.get('console', True)
+    max_size = config.get('max_size', '10MB')
+    backup_count = config.get('backup_count', 5)
 
+    # Create logs directory
+    log_dir = Path(log_file).parent
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, log_level.upper()))
+
+    # Clear existing handlers
+    root_logger.handlers = []
+
+    # Create formatter
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
 
-    root_logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, log_level, logging.INFO))
+    # File handler with rotation
+    if log_file:
+        max_bytes = _parse_size(max_size)
+        file_handler = logging.handlers.RotatingFileHandler(
+            log_file,
+            maxBytes=max_bytes,
+            backupCount=backup_count
+        )
+        file_handler.setLevel(getattr(logging, log_level.upper()))
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
 
-    for handler in root_logger.handlers[:]:
-        root_logger.removeHandler(handler)
+    # Console handler
+    if console_logging:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(getattr(logging, log_level.upper()))
+        console_handler.setFormatter(formatter)
+        root_logger.addHandler(console_handler)
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(getattr(logging, log_level, logging.INFO))
-    root_logger.addHandler(console_handler)
-
-    file_handler = logging.handlers.RotatingFileHandler(
-        log_file,
-        maxBytes=10*1024*1024,  # 10MB
-        backupCount=5
-    )
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(getattr(logging, log_level, logging.INFO))
-    root_logger.addHandler(file_handler)
-
+    # Set specific loggers to INFO to avoid spam
     logging.getLogger('urllib3').setLevel(logging.WARNING)
     logging.getLogger('requests').setLevel(logging.WARNING)
-    logging.getLogger('binance').setLevel(logging.WARNING)
+    logging.getLogger('ccxt').setLevel(logging.WARNING)
 
     logging.info("Logging configured successfully")
 
 
+def _parse_size(size_str: str) -> int:
+    """Parse size string to bytes"""
+    size_str = size_str.upper()
+
+    if size_str.endswith('KB'):
+        return int(size_str[:-2]) * 1024
+    elif size_str.endswith('MB'):
+        return int(size_str[:-2]) * 1024 * 1024
+    elif size_str.endswith('GB'):
+        return int(size_str[:-2]) * 1024 * 1024 * 1024
+    else:
+        return int(size_str)
+
+
 def get_logger(name: str) -> logging.Logger:
+    """Get a logger with the given name"""
     return logging.getLogger(name)
-
-
-class TradingLogger:
-    def __init__(self, config: Dict):
-        self.config = config
-        self.setup_specialized_loggers()
-
-    def setup_specialized_loggers(self):
-        signals_logger = logging.getLogger('signals')
-        signals_handler = logging.FileHandler('logs/signals.log')
-        signals_handler.setFormatter(
-            logging.Formatter('%(asctime)s - %(message)s')
-        )
-        signals_logger.addHandler(signals_handler)
-        signals_logger.setLevel(logging.INFO)
-
-        trades_logger = logging.getLogger('trades')
-        trades_handler = logging.FileHandler('logs/trades.log')
-        trades_handler.setFormatter(
-            logging.Formatter('%(asctime)s - %(message)s')
-        )
-        trades_logger.addHandler(trades_handler)
-        trades_logger.setLevel(logging.INFO)
-
-        risk_logger = logging.getLogger('risk')
-        risk_handler = logging.FileHandler('logs/risk.log')
-        risk_handler.setFormatter(
-            logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        )
-        risk_logger.addHandler(risk_handler)
-        risk_logger.setLevel(logging.WARNING)
-
-    def log_signal(self, signal_data: Dict):
-        signals_logger = logging.getLogger('signals')
-        signals_logger.info(f"Signal: {signal_data}")
-
-    def log_trade(self, trade_data: Dict):
-        trades_logger = logging.getLogger('trades')
-        trades_logger.info(f"Trade: {trade_data}")
-
-    def log_risk_event(self, risk_event: str, level: str = 'WARNING'):
-        risk_logger = logging.getLogger('risk')
-        if level == 'CRITICAL':
-            risk_logger.critical(risk_event)
-        elif level == 'ERROR':
-            risk_logger.error(risk_event)
-        else:
-            risk_logger.warning(risk_event)
