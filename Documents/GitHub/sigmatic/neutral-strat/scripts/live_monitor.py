@@ -212,7 +212,7 @@ class LivePerformanceMonitor:
 
         if not metrics:
             logger.info("Insufficient data for metrics calculation")
-            return
+            return None, []
 
         alerts = self.check_alerts(metrics)
         alert_section = "\n".join(alerts) if alerts else "✅ No alerts"
@@ -287,6 +287,10 @@ def simulate_trading_day(monitor: LivePerformanceMonitor, portfolio_value: float
     """Simulate logging a trading day"""
     monitor.log_daily_performance(portfolio_value, positions, notes)
     report, alerts = monitor.generate_daily_report()
+
+    if report is None:
+        logger.info("No report generated - insufficient data")
+        return None, []
 
     if alerts:
         logger.warning(f"ALERTS DETECTED: {alerts}")
