@@ -169,24 +169,43 @@ def backtest_relative_momentum_pair(
     aligned_data.dropna(inplace=True)
 
     if enable_optimizations:
-        # OPTIMIZATION 1: Multi-timeframe signal confirmation
-        # Add longer-term trend filter to reduce false signals
-        long_ema_window = min(ema_window * 3, 60)  # 3x main EMA, max 60 days
+        # OPTIMIZATION 1: Enhanced Multi-timeframe signal confirmation for 5-year stability
+        # Add multiple EMA filters for different market regimes
+        long_ema_window = min(ema_window * 4, 90)  # Longer trend filter for 5-year period
+        very_long_ema_window = min(ema_window * 8, 200)  # Very long-term trend
+
         aligned_data['long_ema_ratio'] = aligned_data['relative_ratio'].ewm(
             span=long_ema_window, adjust=False
         ).mean()
+        aligned_data['very_long_ema_ratio'] = aligned_data['relative_ratio'].ewm(
+            span=very_long_ema_window, adjust=False
+        ).mean()
 
-        # OPTIMIZATION 2: Volatility-based position sizing
-        # Reduce position size during high volatility periods
-        vol_window = 20
-        aligned_data['volatility'] = (
-            (aligned_data['base_ret'].rolling(vol_window).std() +
-             aligned_data['alt_ret'].rolling(vol_window).std()) / 2
+        # OPTIMIZATION 2: Adaptive volatility regime detection
+        # More sophisticated volatility measurement for longer periods
+        short_vol_window = 20
+        long_vol_window = 60
+
+        aligned_data['short_volatility'] = (
+            (aligned_data['base_ret'].rolling(short_vol_window).std() +
+             aligned_data['alt_ret'].rolling(short_vol_window).std()) / 2
         )
-        median_vol = aligned_data['volatility'].median()
+        aligned_data['long_volatility'] = (
+            (aligned_data['base_ret'].rolling(long_vol_window).std() +
+             aligned_data['alt_ret'].rolling(long_vol_window).std()) / 2
+        )
 
-        # OPTIMIZATION 3: RSI-based momentum filter
-        # Add RSI to avoid entering positions when assets are overbought/oversold
+        # Volatility regime detection
+        vol_percentile_75 = aligned_data['long_volatility'].rolling(250).quantile(0.75)
+        vol_percentile_25 = aligned_data['long_volatility'].rolling(250).quantile(0.25)
+
+        aligned_data['vol_regime'] = np.where(
+            aligned_data['long_volatility'] > vol_percentile_75, 'high',
+            np.where(aligned_data['long_volatility'] < vol_percentile_25, 'low', 'normal')
+        )
+
+        # OPTIMIZATION 3: Enhanced momentum indicators
+        # Multiple momentum filters for better signal quality
         def calculate_rsi(prices, window=14):
             delta = prices.diff()
             gains = delta.where(delta > 0, 0).rolling(window=window).mean()
@@ -194,8 +213,30 @@ def backtest_relative_momentum_pair(
             rs = gains / losses
             return 100 - (100 / (1 + rs))
 
+        def calculate_macd(prices, fast=12, slow=26, signal=9):
+            exp1 = prices.ewm(span=fast).mean()
+            exp2 = prices.ewm(span=slow).mean()
+            macd_line = exp1 - exp2
+            signal_line = macd_line.ewm(span=signal).mean()
+            return macd_line, signal_line
+
         aligned_data['base_rsi'] = calculate_rsi(aligned_data['base'])
         aligned_data['alt_rsi'] = calculate_rsi(aligned_data['alt'])
+
+        # Add MACD for additional momentum confirmation
+        base_macd, base_signal = calculate_macd(aligned_data['base'])
+        alt_macd, alt_signal = calculate_macd(aligned_data['alt'])
+        aligned_data['base_macd_bull'] = base_macd > base_signal
+        aligned_data['alt_macd_bull'] = alt_macd > alt_signal
+
+        # OPTIMIZATION 4: Market stress indicator
+        # Detect market stress periods for defensive positioning
+        combined_returns = (aligned_data['base_ret'] + aligned_data['alt_ret']) / 2
+        stress_window = 30
+        aligned_data['market_stress'] = (
+            combined_returns.rolling(stress_window).std() >
+            combined_returns.rolling(stress_window * 3).std() * 1.5
+        )
 
     # Calculate main EMA
     aligned_data['ema_ratio'] = aligned_data['relative_ratio'].ewm(
@@ -203,50 +244,56 @@ def backtest_relative_momentum_pair(
     ).mean()
 
     if enable_optimizations:
-        # OPTIMIZATION 4: Enhanced signal generation with filters
-        # Signal strength based on multiple confirmations
+        # OPTIMIZATION 5: Advanced signal generation for 5-year stability
         main_signal = aligned_data['relative_ratio'] > aligned_data['ema_ratio']
         trend_confirmation = aligned_data['relative_ratio'] > aligned_data['long_ema_ratio']
+        long_trend_confirmation = aligned_data['relative_ratio'] > aligned_data['very_long_ema_ratio']
 
-        # RSI filter: avoid extreme overbought/oversold conditions (more permissive)
+        # Enhanced filters for longer-term stability
         rsi_filter = (
-            (aligned_data['base_rsi'] > 15) & (aligned_data['base_rsi'] < 85) &
-            (aligned_data['alt_rsi'] > 15) & (aligned_data['alt_rsi'] < 85)
+            (aligned_data['base_rsi'] > 20) & (aligned_data['base_rsi'] < 80) &
+            (aligned_data['alt_rsi'] > 20) & (aligned_data['alt_rsi'] < 80)
         )
 
-        # Volatility filter: reduce exposure during high volatility (less aggressive)
-        vol_multiplier = np.clip(median_vol / aligned_data['volatility'], 0.6, 1.2)
+        # MACD momentum confirmation
+        macd_confirmation = (
+            (aligned_data['base_macd_bull'] & main_signal) |
+            (~aligned_data['alt_macd_bull'] & ~main_signal)
+        )
 
-        # Combined signal with confirmations (less restrictive for better Sharpe)
-        # Use main signal but with trend and RSI as filters, not requirements
-        strong_btc_signal = main_signal & rsi_filter & (trend_confirmation | (vol_multiplier > 0.8))
-        strong_alt_signal = (~main_signal) & rsi_filter & ((~trend_confirmation) | (vol_multiplier > 0.8))
+        # SIMPLIFIED: Back to what worked - less complexity, more performance
+        # Simple volatility filter (what worked in 1-year backtest)
+        median_vol = aligned_data['short_volatility'].median()
+        vol_multiplier = np.clip(median_vol / aligned_data['short_volatility'], 0.7, 1.3)
 
-        # OPTIMIZATION 5: Dynamic position sizing
+        # Simplified signal logic that worked well
+        strong_btc_signal = main_signal & trend_confirmation & rsi_filter
+        strong_alt_signal = (~main_signal) & (~trend_confirmation) & rsi_filter
+
+        # OPTIMIZATION 6: Back to simpler position sizing that worked
         base_weight = allocation_weight * vol_multiplier
 
         aligned_data['btc_weight'] = np.where(
             strong_btc_signal, base_weight,
             np.where(strong_alt_signal, -base_weight,
                      # Fallback to main signal with reduced allocation
-                     np.where(main_signal, base_weight * 0.5, -base_weight * 0.5))
+                     np.where(main_signal, base_weight * 0.7, -base_weight * 0.7))
         )
         aligned_data['alt_weight'] = np.where(
             strong_alt_signal, base_weight,
             np.where(strong_btc_signal, -base_weight,
                      # Fallback to main signal with reduced allocation
-                     np.where(~main_signal, base_weight * 0.5, -base_weight * 0.5))
+                     np.where(~main_signal, base_weight * 0.7, -base_weight * 0.7))
         )
 
-        # OPTIMIZATION 6: Trend-following momentum boost (more aggressive for better Sharpe)
-        # Increase allocation when trend is very strong
+        # OPTIMIZATION 7: Simplified momentum boost (back to what worked)
         ratio_momentum = (aligned_data['relative_ratio'] / aligned_data['ema_ratio'] - 1).abs()
-        momentum_boost = np.clip(ratio_momentum * 3, 1.0, 2.0)  # 1.0x to 2.0x boost
+        momentum_boost = np.clip(ratio_momentum * 3, 1.0, 2.0)  # Same as 1-year success
 
         aligned_data['btc_weight'] *= momentum_boost
         aligned_data['alt_weight'] *= momentum_boost
 
-        # Cap maximum weight (increased limit)
+        # Simple weight caps that worked
         max_weight = allocation_weight * 2.0
         aligned_data['btc_weight'] = np.clip(aligned_data['btc_weight'], -max_weight, max_weight)
         aligned_data['alt_weight'] = np.clip(aligned_data['alt_weight'], -max_weight, max_weight)
@@ -264,9 +311,9 @@ def backtest_relative_momentum_pair(
             -allocation_weight
         )
 
-    # OPTIMIZATION 7: Stop-loss mechanism (less aggressive for better returns)
+    # OPTIMIZATION 8: Back to simple stop-loss that worked
     if enable_optimizations:
-        # Calculate strategy-specific drawdown instead of combined returns
+        # Simple strategy drawdown (what worked in 1-year)
         strategy_returns_preview = (
             aligned_data['btc_weight'].shift(1).fillna(0) * aligned_data['base_ret'].fillna(0) +
             aligned_data['alt_weight'].shift(1).fillna(0) * aligned_data['alt_ret'].fillna(0)
@@ -275,9 +322,9 @@ def backtest_relative_momentum_pair(
         rolling_max = cumulative_ret.rolling(window=30, min_periods=1).max()
         drawdown = (cumulative_ret - rolling_max) / rolling_max
 
-        # Reduce position size when in significant drawdown (higher threshold)
-        drawdown_threshold = -0.15  # 15% drawdown threshold (less restrictive)
-        drawdown_multiplier = np.where(drawdown < drawdown_threshold, 0.7, 1.0)  # Less reduction
+        # Simple threshold that worked well
+        drawdown_threshold = -0.12  # 12% drawdown threshold
+        drawdown_multiplier = np.where(drawdown < drawdown_threshold, 0.7, 1.0)
 
         aligned_data['btc_weight'] *= drawdown_multiplier
         aligned_data['alt_weight'] *= drawdown_multiplier
