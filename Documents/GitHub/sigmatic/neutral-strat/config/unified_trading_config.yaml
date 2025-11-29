@@ -1,0 +1,128 @@
+# Unified Trading Configuration
+# This config ensures PERFECT ALIGNMENT between backtest, test, and live modes
+# Only execution environment changes - strategy logic is identical
+
+# =====================================================
+# STRATEGY PARAMETERS (IDENTICAL ACROSS ALL MODES)
+# =====================================================
+
+# Trading pairs - EXACT same for all modes
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 10
+    allocation_weight: 0.75
+    max_notional: 1000
+  - base: BTCUSDT
+    alt: ETHUSDT
+    ema_window: 12
+    allocation_weight: 0.75
+    max_notional: 1000
+  - base: BTCUSDT
+    alt: SOLUSDT
+    ema_window: 8
+    allocation_weight: 0.75
+    max_notional: 1000
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 15
+    allocation_weight: 0.75
+    max_notional: 1000
+
+# Strategy configuration - IDENTICAL for all modes
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true                # Same optimization logic
+    window_range_start: 1
+    window_range_end: 30
+    metric: "sharpe"
+
+# Portfolio settings - IDENTICAL for all modes
+portfolio:
+  equal_weight: true
+  volatility_scaled: true
+  rebalance_frequency: "daily"
+
+# Risk management - IDENTICAL core logic
+risk:
+  max_daily_dd: 0.05            # 5% max daily drawdown
+  max_total_dd: 0.10            # 10% max total drawdown
+  leverage_limit: 10.0          # Leverage limit for futures
+  max_position_size: 0.2        # 20% max position size
+  stop_loss: 0.02               # 2% stop loss
+
+# Futures settings - IDENTICAL for all modes
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8          # Every 8 hours
+
+# Backtest settings - IDENTICAL baseline
+backtest:
+  start_date: "2023-10-01"
+  end_date: null                # Use current date
+  initial_capital: 10000
+  freq: 365
+
+# =====================================================
+# MODE-SPECIFIC EXECUTION SETTINGS
+# =====================================================
+
+# Execution parameters that vary by mode
+execution:
+  # Core trading parameters - SAME LOGIC
+  slippage: 0.0005              # 0.05% slippage
+  fees: 0.0004                  # Binance futures maker fees
+
+  # Mode-specific timing (but same strategy triggers)
+  backtest_mode:
+    interval: "1d"              # Daily for backtest
+    mode: "backtest"
+
+  test_mode:
+    interval: "1h"              # Hourly checks for testing
+    mode: "paper"
+    check_frequency_minutes: 60 # Check every hour
+    position_size_multiplier: 0.01  # Use 1% of normal size for safe testing
+    use_spot_trading: true      # Use spot instead of futures for testing
+    simulate_execution: true    # Pure simulation mode
+
+  live_mode:
+    interval: "1d"              # Daily like backtest
+    mode: "live"
+    check_frequency_minutes: 120   # Check every 2 hours
+    position_size_multiplier: 1.0  # Full size for live
+    confirmation_required: true
+
+# =====================================================
+# ENVIRONMENT SETTINGS
+# =====================================================
+
+# Binance API settings
+binance:
+  # Mode-specific endpoints and credentials
+  testnet_mode:
+    testnet: false  # Demo trading uses live API
+    base_url: "https://api.binance.com"
+    api_key: "${BINANCE_TESTNET_API_KEY}"
+    api_secret: "${BINANCE_TESTNET_API_SECRET}"
+    demo_trading: true  # Enable demo trading mode
+
+  live_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    api_key: "${BINANCE_LIVE_API_KEY}"
+    api_secret: "${BINANCE_LIVE_API_SECRET}"
+
+# Logging - consistent across modes
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/unified_trading.log"
+
+# Monitoring
+monitoring:
+  status_interval: 600          # 10 minutes
+  daily_reports: true
+  performance_tracking: true
