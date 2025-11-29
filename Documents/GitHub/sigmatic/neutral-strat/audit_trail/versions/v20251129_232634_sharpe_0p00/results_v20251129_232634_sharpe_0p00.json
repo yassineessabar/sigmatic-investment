@@ -1,0 +1,60 @@
+{
+  "version_id": "v20251129_232634_sharpe_0p00",
+  "timestamp": "20251129_232634",
+  "performance": {
+    "sharpe": 0.0,
+    "calmar": 0.0,
+    "max_dd": 0.0,
+    "ann_return": 0.0,
+    "volatility": 0.0,
+    "win_rate": 0,
+    "final_perf": 1.0
+  },
+  "full_results": {
+    "start_date": "2022-11-29",
+    "end_date": "2025-11-29",
+    "strategy_type": "crypto_stat_arb",
+    "best_strategy": "mean_reversion",
+    "sharpe_ratio": -0.5740169082950674,
+    "annual_return": -0.5367992440639607,
+    "total_return": -0.8854086625668289,
+    "max_drawdown": -0.922151567827146,
+    "calmar_ratio": -0.5821160672413256,
+    "final_value": 1145.9133743317107,
+    "target_achieved": "False",
+    "commission_bps": 5.0,
+    "num_pairs": 6,
+    "all_strategies": {
+      "mean_reversion": {
+        "total_return": -0.8854086625668289,
+        "annual_return": -0.5367992440639607,
+        "annual_volatility": 0.9351627736164607,
+        "sharpe_ratio": -0.5740169082950674,
+        "max_drawdown": -0.922151567827146,
+        "calmar_ratio": -0.5821160672413256,
+        "sortino_ratio": -0.5975340542386216,
+        "market_beta": 1.0,
+        "win_rate": 0.4892703862660944,
+        "num_trades": 699,
+        "final_performance": 0.11459133743317107
+      },
+      "volume_momentum": {
+        "total_return": -0.6130961879452859,
+        "annual_return": -0.40313579917746767,
+        "annual_volatility": 0.4277968973699159,
+        "sharpe_ratio": -0.9423532560800136,
+        "max_drawdown": -0.7428832424655251,
+        "calmar_ratio": -0.5426637405893241,
+        "sortino_ratio": -1.0345623426624757,
+        "market_beta": 1.0,
+        "win_rate": 0.3290414878397711,
+        "num_trades": 699,
+        "final_performance": 0.38690381205471414
+      }
+    }
+  },
+  "files": {
+    "strategy": "audit_trail/versions/v20251129_232634_sharpe_0p00/crypto_stat_arb_sharpe_0p00.py",
+    "config": "audit_trail/versions/v20251129_232634_sharpe_0p00/config_v20251129_232634_sharpe_0p00.yaml"
+  }
+}

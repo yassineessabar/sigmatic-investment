@@ -24,6 +24,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.utils.config import ConfigManager
 from src.utils.logger import setup_logging
+from src.utils.audit_trail import StrategyAuditTrail
 from src.strategies.relative_momentum import (
     compute_relative_momentum_signals,
     backtest_relative_momentum_pair,
@@ -222,8 +223,12 @@ def print_stats(pair, result, freq=365):
     }
 
 
-def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='config/unified_trading_config.yaml'):
+def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='config/unified_trading_config.yaml',
+                                   create_audit_version=True, description="", optimization_notes=""):
     """Run the complete relative momentum backtest with unified parameters"""
+
+    # Initialize audit trail
+    audit_trail = StrategyAuditTrail() if create_audit_version else None
 
     # Load configuration
     config_manager = ConfigManager()
@@ -458,6 +463,37 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
     print(results_table.to_string(index=False))
     print("\n✅ Results saved to results/relative_momentum_results.csv")
 
+    # Create audit trail version if enabled
+    if audit_trail and create_audit_version:
+        try:
+            # Prepare results for audit trail
+            backtest_results = {
+                'results_table': results_table,
+                'equal_portfolio_returns': equal_portfolio_returns,
+                'vol_scaled_portfolio_returns': vol_scaled_portfolio_returns,
+                'benchmark_returns': benchmark_returns if 'benchmark_returns' in locals() else pd.Series(),
+                'config': config,
+                'start_date': backtest_start_date,
+                'end_date': backtest_end_date
+            }
+
+            # Create strategy version with audit trail
+            strategy_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                                       'src', 'strategies', 'relative_momentum.py')
+
+            version_id = audit_trail.create_strategy_version(
+                strategy_file=strategy_file,
+                config_file=config_path,
+                results=backtest_results,
+                description=description or f"Backtest {backtest_start_date} to {backtest_end_date}",
+                optimization_notes=optimization_notes or "Enhanced strategy with multi-timeframe confirmation"
+            )
+
+            print(f"\n📋 Created audit trail version: {version_id}")
+
+        except Exception as e:
+            logger.warning(f"Failed to create audit trail version: {e}")
+
     # Performance comparison with benchmark
     if len(benchmark_returns) > 0:
         initial_capital = config.get('backtest', {}).get('initial_capital', 10000)
@@ -597,6 +633,15 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str,
                        help='Path to configuration file',
                        default='config/unified_trading_config.yaml')
+    parser.add_argument('--description', type=str,
+                       help='Description for audit trail version',
+                       default='')
+    parser.add_argument('--optimization-notes', type=str,
+                       help='Technical optimization notes for audit trail',
+                       default='')
+    parser.add_argument('--no-audit', action='store_true',
+                       help='Skip creating audit trail version',
+                       default=False)
 
     args = parser.parse_args()
 
@@ -626,5 +671,8 @@ if __name__ == "__main__":
     run_relative_momentum_backtest(
         start_date=args.start_date,
         end_date=args.end_date,
-        config_path=args.config
+        config_path=args.config,
+        create_audit_version=not args.no_audit,
+        description=args.description,
+        optimization_notes=args.optimization_notes
     )

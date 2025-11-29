@@ -1,0 +1,71 @@
+# Crypto Statistical Arbitrage Strategy Configuration
+# Market-neutral statistical arbitrage for cryptocurrency pairs
+# Target: 2+ Sharpe ratio with controlled drawdown
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    allocation_weight: 1.0
+  - base: BTCUSDT
+    alt: ADAUSDT
+    allocation_weight: 1.0
+  - base: BTCUSDT
+    alt: ETHUSDT
+    allocation_weight: 1.0
+  - base: BTCUSDT
+    alt: SOLUSDT
+    allocation_weight: 1.0
+  - base: BTCUSDT
+    alt: DOTUSDT
+    allocation_weight: 1.0
+
+strategy:
+  type: "crypto_stat_arb"
+
+  # Mean reversion parameters
+  mean_reversion:
+    formation_period: 1
+    holding_period: 1
+    long_threshold: 0.2    # Buy worst performers
+    short_threshold: 0.8   # Sell best performers
+
+  # Volume momentum parameters
+  volume_momentum:
+    formation_period: 7
+    holding_period: 1
+    signal_lag: 1
+    long_threshold: 0.2
+    short_threshold: 0.8
+
+portfolio:
+  equal_weight: true
+  rebalance_frequency: "daily"
+  market_neutral: true
+
+risk:
+  max_daily_dd: 0.10
+  max_total_dd: 0.25
+  leverage_limit: 10.0
+  max_position_size: 0.5
+
+execution:
+  slippage: 0.00005
+  fees: 0.00005
+  commission_bps: 5.0
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+  split_date: "2023-01-01"
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/crypto_stat_arb_trading.log"

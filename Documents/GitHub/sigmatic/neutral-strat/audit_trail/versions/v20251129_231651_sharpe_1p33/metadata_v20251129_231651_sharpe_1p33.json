@@ -1,0 +1,22 @@
+{
+  "version_id": "v20251129_231651_sharpe_1p33",
+  "timestamp": "20251129_231651",
+  "description": "Min Drawdown 3Y optimization",
+  "optimization_notes": "Conservative allocation, longer EMAs, tight stops, risk filters",
+  "performance": {
+    "sharpe_ratio": 1.328860660857073,
+    "calmar_ratio": 1.6934976742579335,
+    "max_drawdown": -0.20580167164461194,
+    "annual_return": 0.34852465228854523,
+    "volatility": 0.2622732860973986
+  },
+  "files": {
+    "strategy": "relative_momentum_sharpe_1p33.py",
+    "config": "config_v20251129_231651_sharpe_1p33.yaml",
+    "results": "results_v20251129_231651_sharpe_1p33.json"
+  },
+  "file_hashes": {
+    "strategy": "5a3767f070052e5af90673c0cc12033f",
+    "config": "9928dbdfe8b87054530a82d460a3bcd5"
+  }
+}

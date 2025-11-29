@@ -1,0 +1,73 @@
+# Minimum Drawdown Configuration
+# Optimized for lowest maximum drawdown
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 8
+    allocation_weight: 0.6    # Conservative allocation
+    max_notional: 2000
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 10
+    allocation_weight: 0.6
+    max_notional: 2000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 5
+    window_range_end: 20       # Smoother signals
+    metric: "calmar"           # Optimize for return/drawdown ratio
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true  # Risk filters enabled
+    dynamic_position_sizing: true
+    trend_momentum_boost: false
+    stop_loss_mechanism: true  # Protection enabled
+    enhanced_cost_calculation: true
+
+portfolio:
+  equal_weight: true         # Conservative equal weighting
+  volatility_scaled: true
+  rebalance_frequency: "weekly"  # Less frequent rebalancing
+
+risk:
+  max_daily_dd: 0.05         # Very conservative
+  max_total_dd: 0.10
+  leverage_limit: 5.0        # Low leverage
+  max_position_size: 0.2     # Small positions
+  stop_loss: 0.02            # Tight stop loss
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0005
+  fees: 0.0004
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/min_drawdown_trading.log"

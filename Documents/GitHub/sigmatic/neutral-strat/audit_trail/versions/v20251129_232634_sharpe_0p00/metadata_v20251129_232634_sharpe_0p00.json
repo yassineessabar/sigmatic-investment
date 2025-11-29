@@ -1,0 +1,22 @@
+{
+  "version_id": "v20251129_232634_sharpe_0p00",
+  "timestamp": "20251129_232634",
+  "description": "Initial crypto statistical arbitrage strategy test",
+  "optimization_notes": "Testing market-neutral statistical arbitrage for 2+ Sharpe target",
+  "performance": {
+    "sharpe_ratio": 0.0,
+    "calmar_ratio": 0.0,
+    "max_drawdown": 0.0,
+    "annual_return": 0.0,
+    "volatility": 0.0
+  },
+  "files": {
+    "strategy": "crypto_stat_arb_sharpe_0p00.py",
+    "config": "config_v20251129_232634_sharpe_0p00.yaml",
+    "results": "results_v20251129_232634_sharpe_0p00.json"
+  },
+  "file_hashes": {
+    "strategy": "8c2c4f59aea2b372723da008a83b0ef8",
+    "config": "f63f9aa739cd9ce47d30877081f6ef5a"
+  }
+}

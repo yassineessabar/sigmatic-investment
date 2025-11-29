@@ -1,0 +1,22 @@
+{
+  "version_id": "v20251129_225251_sharpe_2p02",
+  "timestamp": "20251129_225251",
+  "description": "High Sharpe optimized 3-year",
+  "optimization_notes": "Aggressive allocation weights, shorter EMA windows, reduced costs, higher leverage tolerance",
+  "performance": {
+    "sharpe_ratio": 2.0173956512216975,
+    "calmar_ratio": 2.900920855792044,
+    "max_drawdown": -0.14812530126313606,
+    "annual_return": 0.42969977570471096,
+    "volatility": 0.21299727470141652
+  },
+  "files": {
+    "strategy": "relative_momentum_sharpe_2p02.py",
+    "config": "config_v20251129_225251_sharpe_2p02.yaml",
+    "results": "results_v20251129_225251_sharpe_2p02.json"
+  },
+  "file_hashes": {
+    "strategy": "5a3767f070052e5af90673c0cc12033f",
+    "config": "f4129102cd0b22b9d61e203a2ce5478d"
+  }
+}

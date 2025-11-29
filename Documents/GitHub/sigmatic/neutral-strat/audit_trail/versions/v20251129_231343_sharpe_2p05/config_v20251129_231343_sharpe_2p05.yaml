@@ -1,0 +1,74 @@
+# Maximum Sharpe Ratio Configuration
+# Optimized specifically for highest risk-adjusted returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 2
+    allocation_weight: 1.2    # Leverage for best performer
+    max_notional: 5000
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 3
+    allocation_weight: 1.1
+    max_notional: 5000
+  # Exclude poor performers ETH and SOL
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 8        # Fastest signals only
+    metric: "sharpe"
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: false
+    dynamic_position_sizing: true
+    trend_momentum_boost: true
+    stop_loss_mechanism: false
+    enhanced_cost_calculation: false
+
+portfolio:
+  equal_weight: false
+  volatility_scaled: true
+  rebalance_frequency: "daily"
+
+risk:
+  max_daily_dd: 0.15
+  max_total_dd: 0.25
+  leverage_limit: 25.0
+  max_position_size: 0.5
+  stop_loss: 0.06
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001
+  fees: 0.0001
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/max_sharpe_trading.log"

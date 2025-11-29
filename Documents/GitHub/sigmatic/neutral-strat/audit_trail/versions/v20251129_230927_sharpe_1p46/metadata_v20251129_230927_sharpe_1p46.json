@@ -1,0 +1,22 @@
+{
+  "version_id": "v20251129_230927_sharpe_1p46",
+  "timestamp": "20251129_230927",
+  "description": "Backtest 2022-11-29 to 2025-11-29",
+  "optimization_notes": "Enhanced strategy with multi-timeframe confirmation",
+  "performance": {
+    "sharpe_ratio": 1.4569387896402473,
+    "calmar_ratio": 2.1472676284555874,
+    "max_drawdown": -0.17524063061569672,
+    "annual_return": 0.3762885333112287,
+    "volatility": 0.25827339898345575
+  },
+  "files": {
+    "strategy": "relative_momentum_sharpe_1p46.py",
+    "config": "config_v20251129_230927_sharpe_1p46.yaml",
+    "results": "results_v20251129_230927_sharpe_1p46.json"
+  },
+  "file_hashes": {
+    "strategy": "5a3767f070052e5af90673c0cc12033f",
+    "config": "d3a10351e6a9bd454bdf8d7d573f308b"
+  }
+}

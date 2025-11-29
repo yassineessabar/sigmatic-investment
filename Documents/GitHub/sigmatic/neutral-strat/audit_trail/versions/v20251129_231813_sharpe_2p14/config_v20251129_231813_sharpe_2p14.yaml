@@ -1,0 +1,74 @@
+# Ultimate Optimized Strategy Configuration
+# Best combination of high Sharpe, high returns, controlled drawdown
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 2
+    allocation_weight: 1.3    # Leveraged best performer
+    max_notional: 6000
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 3
+    allocation_weight: 1.2    # Strong performer
+    max_notional: 6000
+  # Exclude ETH (consistently poor) and SOL (high volatility, poor risk-adjusted returns)
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 6        # Ultra-fast signals based on best performers
+    metric: "sharpe"           # Focus on risk-adjusted returns
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Keep for signal quality
+    volatility_position_sizing: true    # Dynamic sizing
+    rsi_momentum_filter: false          # Remove for aggression
+    dynamic_position_sizing: true
+    trend_momentum_boost: true
+    stop_loss_mechanism: false          # No stops for max aggression
+    enhanced_cost_calculation: false
+
+portfolio:
+  equal_weight: false         # Use optimized weights
+  volatility_scaled: true     # Volatility scaling
+  rebalance_frequency: "daily"
+
+risk:
+  max_daily_dd: 0.15         # Moderate risk tolerance
+  max_total_dd: 0.30         # Higher but controlled
+  leverage_limit: 25.0       # High leverage
+  max_position_size: 0.6     # Large positions
+  stop_loss: 0.07
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00005          # Ultra-low costs (VIP+ level)
+  fees: 0.00005              # Market maker rebates
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultimate_strategy_trading.log"

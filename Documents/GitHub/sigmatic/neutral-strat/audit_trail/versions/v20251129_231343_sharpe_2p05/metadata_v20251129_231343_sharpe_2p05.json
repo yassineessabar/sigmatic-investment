@@ -1,0 +1,22 @@
+{
+  "version_id": "v20251129_231343_sharpe_2p05",
+  "timestamp": "20251129_231343",
+  "description": "Max Sharpe 3Y optimization",
+  "optimization_notes": "Leveraged best pairs only, fastest signals, minimal costs",
+  "performance": {
+    "sharpe_ratio": 2.0512634433867265,
+    "calmar_ratio": 3.660550421970807,
+    "max_drawdown": -0.2685066683651359,
+    "annual_return": 0.9828821981859739,
+    "volatility": 0.47915941823795777
+  },
+  "files": {
+    "strategy": "relative_momentum_sharpe_2p05.py",
+    "config": "config_v20251129_231343_sharpe_2p05.yaml",
+    "results": "results_v20251129_231343_sharpe_2p05.json"
+  },
+  "file_hashes": {
+    "strategy": "5a3767f070052e5af90673c0cc12033f",
+    "config": "76c6f61a722ac843347cd75fc34ce4f8"
+  }
+}

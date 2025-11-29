@@ -1,0 +1,22 @@
+{
+  "version_id": "v20251129_222316_sharpe_4p10",
+  "timestamp": "20251129_222316",
+  "description": "Current optimized strategy baseline",
+  "optimization_notes": "Multi-timeframe confirmation with volatility positioning and RSI filtering",
+  "performance": {
+    "sharpe_ratio": 4.10227190626114,
+    "calmar_ratio": 8.764499648782339,
+    "max_drawdown": -0.08471156366806853,
+    "annual_return": 0.7424544700165894,
+    "volatility": 0.18098616741698903
+  },
+  "files": {
+    "strategy": "relative_momentum_sharpe_4p10.py",
+    "config": "config_v20251129_222316_sharpe_4p10.yaml",
+    "results": "results_v20251129_222316_sharpe_4p10.json"
+  },
+  "file_hashes": {
+    "strategy": "5a3767f070052e5af90673c0cc12033f",
+    "config": "c82bd47a89761124f13ae1d8fde15204"
+  }
+}

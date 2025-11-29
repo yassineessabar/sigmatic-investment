@@ -1,0 +1,105 @@
+{
+  "version_id": "v20251129_231813_sharpe_2p14",
+  "timestamp": "20251129_231813",
+  "performance": {
+    "sharpe": 2.1433558636786234,
+    "calmar": 3.956483390585246,
+    "max_dd": -0.2763762700399607,
+    "ann_return": 1.0934781219650072,
+    "volatility": 0.5101710548841292,
+    "win_rate": 0.5390549662487946,
+    "final_perf": 8.158643718589493
+  },
+  "full_results": {
+    "results_table": "                     Pair EMA_Window  ...  Win Rate  Final_Perf\n0            BTCUSDT/AVAX          2  ...  0.520733    7.813135\n1             BTCUSDT/ADA          3  ...  0.510125    5.715163\n2  Equal-Weight Portfolio        N/A  ...  0.539055    8.158644\n3    Vol-Scaled Portfolio        N/A  ...  0.540019    8.047243\n\n[4 rows x 9 columns]",
+    "equal_portfolio_returns": "datetime\n2023-01-28   -0.017252\n2023-01-29   -0.008673\n2023-01-30   -0.009008\n2023-01-31   -0.015673\n2023-02-01   -0.016279\n                ...   \n2025-11-25    0.009081\n2025-11-26    0.008164\n2025-11-27    0.006314\n2025-11-28    0.012427\n2025-11-29   -0.000491\nLength: 1037, dtype: float64",
+    "vol_scaled_portfolio_returns": "datetime\n2023-01-28   -0.017094\n2023-01-29   -0.008669\n2023-01-30   -0.010713\n2023-01-31   -0.017409\n2023-02-01   -0.015754\n                ...   \n2025-11-25    0.008188\n2025-11-26    0.007336\n2025-11-27    0.007134\n2025-11-28    0.013904\n2025-11-29   -0.000235\nLength: 1037, dtype: float64",
+    "benchmark_returns": "datetime\n2023-01-28   -0.002259\n2023-01-29    0.031474\n2023-01-30   -0.038770\n2023-01-31    0.013125\n2023-02-01    0.026411\n                ...   \n2025-11-25   -0.010459\n2025-11-26    0.035660\n2025-11-27    0.009444\n2025-11-28   -0.004868\n2025-11-29   -0.002893\nName: close, Length: 1037, dtype: float64",
+    "config": {
+      "pairs": [
+        {
+          "base": "BTCUSDT",
+          "alt": "AVAXUSDT",
+          "ema_window": 2,
+          "allocation_weight": 1.3,
+          "max_notional": 6000
+        },
+        {
+          "base": "BTCUSDT",
+          "alt": "ADAUSDT",
+          "ema_window": 3,
+          "allocation_weight": 1.2,
+          "max_notional": 6000
+        }
+      ],
+      "strategy": {
+        "type": "relative_momentum_futures",
+        "optimization": {
+          "enabled": true,
+          "window_range_start": 1,
+          "window_range_end": 6,
+          "metric": "sharpe"
+        },
+        "enhancements": {
+          "enabled": true,
+          "multi_timeframe_confirmation": true,
+          "volatility_position_sizing": true,
+          "rsi_momentum_filter": false,
+          "dynamic_position_sizing": true,
+          "trend_momentum_boost": true,
+          "stop_loss_mechanism": false,
+          "enhanced_cost_calculation": false
+        }
+      },
+      "portfolio": {
+        "equal_weight": false,
+        "volatility_scaled": true,
+        "rebalance_frequency": "daily"
+      },
+      "risk": {
+        "max_daily_dd": 0.15,
+        "max_total_dd": 0.3,
+        "leverage_limit": 25.0,
+        "max_position_size": 0.6,
+        "stop_loss": 0.07
+      },
+      "futures": {
+        "enabled": true,
+        "include_funding": true,
+        "funding_frequency": 8
+      },
+      "backtest": {
+        "start_date": "2022-11-29",
+        "end_date": "2025-11-29",
+        "initial_capital": 10000,
+        "freq": 365
+      },
+      "execution": {
+        "slippage": 5e-05,
+        "fees": 5e-05,
+        "backtest_mode": {
+          "interval": "1d",
+          "mode": "backtest"
+        }
+      },
+      "binance": {
+        "testnet_mode": {
+          "testnet": false,
+          "base_url": "https://api.binance.com",
+          "demo_trading": true
+        }
+      },
+      "logging": {
+        "level": "INFO",
+        "console": true,
+        "file": "logs/ultimate_strategy_trading.log"
+      }
+    },
+    "start_date": "2022-11-29",
+    "end_date": "2025-11-29"
+  },
+  "files": {
+    "strategy": "audit_trail/versions/v20251129_231813_sharpe_2p14/relative_momentum_sharpe_2p14.py",
+    "config": "audit_trail/versions/v20251129_231813_sharpe_2p14/config_v20251129_231813_sharpe_2p14.yaml"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "version_id": "v20251129_231548_sharpe_2p05",
+  "timestamp": "20251129_231548",
+  "description": "Max Returns 3Y optimization",
+  "optimization_notes": "Ultra-leveraged fastest signals, maximum allocation weights",
+  "performance": {
+    "sharpe_ratio": 2.048040930102838,
+    "calmar_ratio": 3.8305492187587036,
+    "max_drawdown": -0.22972798782839476,
+    "annual_return": 0.8799843643030665,
+    "volatility": 0.42967127822922946
+  },
+  "files": {
+    "strategy": "relative_momentum_sharpe_2p05.py",
+    "config": "config_v20251129_231548_sharpe_2p05.yaml",
+    "results": "results_v20251129_231548_sharpe_2p05.json"
+  },
+  "file_hashes": {
+    "strategy": "5a3767f070052e5af90673c0cc12033f",
+    "config": "28f327fcc9b0ebe913e8f2b53dc20e2d"
+  }
+}

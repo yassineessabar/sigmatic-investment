@@ -1,0 +1,78 @@
+# Maximum Returns Configuration
+# Optimized for highest absolute returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1
+    allocation_weight: 1.5    # Maximum leverage
+    max_notional: 8000
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 1
+    allocation_weight: 1.5
+    max_notional: 8000
+  - base: BTCUSDT
+    alt: SOLUSDT
+    ema_window: 1
+    allocation_weight: 1.3
+    max_notional: 8000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 5        # Ultra-fast signals
+    metric: "return"
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: false  # Disabled for max aggression
+    volatility_position_sizing: false
+    rsi_momentum_filter: false
+    dynamic_position_sizing: true
+    trend_momentum_boost: true
+    stop_loss_mechanism: false
+    enhanced_cost_calculation: false
+
+portfolio:
+  equal_weight: false
+  volatility_scaled: false    # Fixed weights for max returns
+  rebalance_frequency: "daily"
+
+risk:
+  max_daily_dd: 0.20          # Higher risk tolerance
+  max_total_dd: 0.35
+  leverage_limit: 30.0        # Maximum leverage
+  max_position_size: 0.7      # Very large positions
+  stop_loss: 0.08
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001
+  fees: 0.0001
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/max_returns_trading.log"
