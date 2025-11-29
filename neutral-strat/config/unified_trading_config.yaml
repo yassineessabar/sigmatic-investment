@@ -36,7 +36,16 @@ strategy:
     enabled: true                # Same optimization logic
     window_range_start: 1
     window_range_end: 30
-    metric: "sharpe"
+    metric: "sharpe"             # Focus on Sharpe ratio optimization
+  enhancements:
+    enabled: true                # Enable strategy optimizations
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: true
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
 
 # Portfolio settings - IDENTICAL for all modes
 portfolio:
