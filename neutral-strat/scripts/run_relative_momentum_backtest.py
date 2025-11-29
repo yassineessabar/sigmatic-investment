@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+Unified Relative Momentum Backtest Runner
+Runs historical backtests with identical strategy parameters as live trading.
+"""
+
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import time
 import numpy as np
 import pandas as pd
@@ -14,6 +17,10 @@ import argparse
 from datetime import datetime
 from typing import Dict, List
 import logging
+from pathlib import Path
+
+# Add src to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.utils.config import ConfigManager
 from src.utils.logger import setup_logging
@@ -32,6 +39,42 @@ from src.utils.backtest_utils import (
 plt.style.use("seaborn-v0_8-darkgrid")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def fetch_ohlcv_all(exchange, symbol, timeframe='1d', since=None, limit=1000, sleep=1):
+    """Fetch all historical OHLCV data for a symbol"""
+    print(f"--- Fetching historical data for {symbol} ({timeframe}) ---")
+    all_ohlcv = []
+
+    if since is None:
+        since = exchange.parse8601('2023-10-01T00:00:00Z')
+
+    while True:
+        try:
+            ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, since=since, limit=limit)
+            if not ohlcv:
+                break
+
+            all_ohlcv += ohlcv
+            last_ts = ohlcv[-1][0]
+            since = last_ts + 1
+
+            if len(ohlcv) < limit:
+                break
+
+            time.sleep(sleep)
+        except Exception as e:
+            logger.warning(f"Error fetching data for {symbol}: {e}")
+            time.sleep(5)
+            continue
+
+    df = pd.DataFrame(all_ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+    df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
+    df.set_index('datetime', inplace=True)
+    df = df[['open', 'high', 'low', 'close', 'volume']]
+
+    print(f"→ {len(df)} candles retrieved for {symbol}.")
+    return df
 
 
 def fetch_funding_rates(exchange, symbol, start_date, end_date):
@@ -98,42 +141,6 @@ def fetch_funding_rates(exchange, symbol, start_date, end_date):
         return pd.DataFrame()
 
 
-def fetch_ohlcv_all(exchange, symbol, timeframe='1d', since=None, limit=1000, sleep=1):
-    """Fetch all historical OHLCV data for a symbol"""
-    print(f"--- Fetching historical data for {symbol} ({timeframe}) ---")
-    all_ohlcv = []
-
-    if since is None:
-        since = exchange.parse8601('2023-10-01T00:00:00Z')
-
-    while True:
-        try:
-            ohlcv = exchange.fetch_ohlcv(symbol, timeframe=timeframe, since=since, limit=limit)
-            if not ohlcv:
-                break
-
-            all_ohlcv += ohlcv
-            last_ts = ohlcv[-1][0]
-            since = last_ts + 1
-
-            if len(ohlcv) < limit:
-                break
-
-            time.sleep(sleep)
-        except Exception as e:
-            logger.warning(f"Error fetching data for {symbol}: {e}")
-            time.sleep(5)
-            continue
-
-    df = pd.DataFrame(all_ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-    df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
-    df.set_index('datetime', inplace=True)
-    df = df[['open', 'high', 'low', 'close', 'volume']]
-
-    print(f"→ {len(df)} candles retrieved for {symbol}.")
-    return df
-
-
 def print_stats(pair, result, freq=365):
     """Print detailed statistics for a strategy result"""
     ann_return = result['ann_return']
@@ -167,23 +174,21 @@ def print_stats(pair, result, freq=365):
     }
 
 
-
-
-def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='config/relative_momentum.yaml'):
-    """Run the complete relative momentum backtest with date parameters"""
+def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='config/unified_trading_config.yaml'):
+    """Run the complete relative momentum backtest with unified parameters"""
 
     # Load configuration
     config_manager = ConfigManager()
     config = config_manager.load_config(config_path)
 
-    setup_logging(config)
+    setup_logging(config.get('logging', {}))
 
     # Initialize exchange for futures
     exchange = ccxt.binance({
         'enableRateLimit': True,
-        'sandbox': False,  # Set to True for testnet
+        'sandbox': False,
         'options': {
-            'defaultType': 'future'  # Use futures instead of spot
+            'defaultType': 'future'
         }
     })
 
@@ -242,7 +247,7 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
                 logger.warning(f"No price data for {futures_symbol} in date range {backtest_start_date} to {backtest_end_date}")
                 continue
 
-            data[symbol] = df_filtered  # Keep original symbol as key for compatibility
+            data[symbol] = df_filtered
 
             # Fetch funding rates
             funding_df = fetch_funding_rates(exchange, symbol, backtest_start_date, backtest_end_date)
@@ -379,26 +384,6 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
     print(results_table.to_string(index=False))
     print("\n✅ Results saved to results/relative_momentum_results.csv")
 
-    # Calculate total costs across all strategies
-    total_costs_equal = pd.Series()
-    total_costs_vol = pd.Series()
-
-    # Aggregate costs from all pairs for the equal-weight portfolio
-    for pair_name, returns in pair_returns.items():
-        # Find the corresponding result with cost data
-        for pair_config in config['pairs']:
-            base_symbol = pair_config['base']
-            alt_symbol = pair_config['alt']
-            if f"{base_symbol}/{alt_symbol.replace('USDT', '')}" == pair_name:
-                # Get the best result for this pair (stored during backtest)
-                if pair_name in locals():  # This will need to be fixed - we need to store results
-                    pass
-                break
-
-    # For now, create empty cost series (will be enhanced when we store individual results)
-    equal_weight = np.ones(df_all.shape[1]) / df_all.shape[1]
-    vol_weight = inv_vol_w if 'inv_vol_w' in locals() else equal_weight
-
     # Performance comparison with benchmark
     if len(benchmark_returns) > 0:
         initial_capital = config.get('backtest', {}).get('initial_capital', 10000)
@@ -406,12 +391,12 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
         print_performance_comparison(
             equal_portfolio_returns, benchmark_returns,
             "Equal-Weight Portfolio", "BTC Buy & Hold", freq,
-            initial_capital, None  # Will add cost data in future enhancement
+            initial_capital, None
         )
         print_performance_comparison(
             vol_scaled_portfolio_returns, benchmark_returns,
             "Vol-Scaled Portfolio", "BTC Buy & Hold", freq,
-            initial_capital, None  # Will add cost data in future enhancement
+            initial_capital, None
         )
 
     # Plot cumulative performance
@@ -439,19 +424,11 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
     plt.tight_layout()
     plt.show()
 
-    # Correlation heatmap
-    if len(df_all.columns) > 1:
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(df_all.corr(), annot=True, cmap="coolwarm", fmt=".2f", square=True)
-        plt.title("Strategy Return Correlation Matrix")
-        plt.tight_layout()
-        plt.show()
-
     return results_table
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run relative momentum strategy backtest')
+    parser = argparse.ArgumentParser(description='Run unified relative momentum strategy backtest')
     parser.add_argument('--start-date', type=str,
                        help='Start date for backtest (YYYY-MM-DD)',
                        default=None)
@@ -460,7 +437,7 @@ if __name__ == "__main__":
                        default=None)
     parser.add_argument('--config', type=str,
                        help='Path to configuration file',
-                       default='config/relative_momentum.yaml')
+                       default='config/unified_trading_config.yaml')
 
     args = parser.parse_args()
 
