@@ -28,7 +28,8 @@ from src.strategies.relative_momentum import (
     compute_relative_momentum_signals,
     backtest_relative_momentum_pair,
     optimize_ema_window,
-    compute_metrics
+    compute_metrics,
+    create_optimized_strategy_comparison
 )
 from src.utils.backtest_utils import (
     print_performance_comparison,
@@ -141,6 +142,49 @@ def fetch_funding_rates(exchange, symbol, start_date, end_date):
         return pd.DataFrame()
 
 
+def print_optimization_comparison(comparison, pair_name):
+    """Print comparison between original and optimized strategy"""
+    orig = comparison['original']
+    opt = comparison['optimized']
+    imp = comparison['improvements']
+
+    print(f"\n🔧 STRATEGY OPTIMIZATION COMPARISON: {pair_name}")
+    print(f"{'='*80}")
+    print(f"{'Metric':<25} {'Original':<15} {'Optimized':<15} {'Improvement':<15}")
+    print(f"{'-'*80}")
+
+    metrics = [
+        ('Sharpe Ratio', orig['sharpe'], opt['sharpe'], imp['sharpe_improvement']),
+        ('Max Drawdown', orig['max_dd'], opt['max_dd'], imp['drawdown_improvement']),
+        ('Ann. Return', orig['ann_return'], opt['ann_return'], imp['return_improvement']),
+        ('Ann. Volatility', orig['ann_vol'], opt['ann_vol'], imp['volatility_change']),
+    ]
+
+    for name, orig_val, opt_val, improvement in metrics:
+        if 'Ratio' in name or 'Return' in name or 'Volatility' in name:
+            if 'Drawdown' in name:
+                print(f"{name:<25} {orig_val:>13.2%} {opt_val:>13.2%} {improvement:>+13.2%}")
+            else:
+                print(f"{name:<25} {orig_val:>13.2f} {opt_val:>13.2f} {improvement:>+13.2f}")
+        else:
+            print(f"{name:<25} {orig_val:>13.2%} {opt_val:>13.2%} {improvement:>+13.2%}")
+
+    # Overall assessment
+    sharpe_improved = imp['sharpe_improvement'] > 0
+    dd_improved = imp['drawdown_improvement'] > 0
+
+    print(f"{'-'*80}")
+    if sharpe_improved and dd_improved:
+        print("✅ Optimization successful: Better Sharpe ratio AND lower drawdown")
+    elif sharpe_improved:
+        print("⚠️ Mixed results: Better Sharpe ratio but similar/worse drawdown")
+    elif dd_improved:
+        print("⚠️ Mixed results: Lower drawdown but similar/worse Sharpe ratio")
+    else:
+        print("❌ Optimization minimal: Consider parameter adjustments")
+    print(f"{'='*80}")
+
+
 def print_stats(pair, result, freq=365):
     """Print detailed statistics for a strategy result"""
     ann_return = result['ann_return']
@@ -155,11 +199,15 @@ def print_stats(pair, result, freq=365):
     calmar = np.clip(ann_return / abs(max_dd) if max_dd != 0 else np.nan, -10, 10)
     win_rate = (returns > 0).mean()
 
-    print(f"\n========== {pair} ==========")
-    print(f"Best EMA window: {result['ema_window']}d | Sharpe: {sharpe:.2f} | Sortino: {sortino:.2f}")
+    # Show if optimizations are enabled
+    opt_status = "Enhanced" if result.get('optimizations_enabled', False) else "Original"
+    optimization_metric = result.get('optimization_metric', 'sharpe')
+
+    print(f"\n========== {pair} ({opt_status} Strategy) ==========")
+    print(f"Best EMA window: {result['ema_window']}d | Optimization metric: {optimization_metric}")
+    print(f"Sharpe: {sharpe:.2f} | Sortino: {sortino:.2f} | Calmar: {calmar:.2f}")
     print(f"Ann.Return: {ann_return:.2%} | Ann.Vol: {ann_vol:.2%} | Max DD: {max_dd:.2%}")
-    print(f"Calmar: {calmar:.2f} | Win Rate: {win_rate:.2%}")
-    print(f"Final Performance: {result['final_performance']:.2f}x")
+    print(f"Win Rate: {win_rate:.2%} | Final Performance: {result['final_performance']:.2f}x")
 
     return {
         'Pair': pair,
@@ -281,8 +329,12 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
             base_funding_data = funding_data.get(base_symbol, pd.DataFrame())
             alt_funding_data = funding_data.get(alt_symbol, pd.DataFrame())
 
+            # Check if strategy enhancements are enabled
+            enable_optimizations = config['strategy'].get('enhancements', {}).get('enabled', True)
+            optimization_metric = config['strategy']['optimization'].get('metric', 'sharpe')
+
             if config['strategy']['optimization']['enabled']:
-                # Optimize EMA window
+                # Optimize EMA window with enhanced strategy
                 window_start = config['strategy']['optimization']['window_range_start']
                 window_end = config['strategy']['optimization']['window_range_end']
 
@@ -295,10 +347,12 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
                     config['execution']['slippage'],
                     freq,
                     base_funding_data,
-                    alt_funding_data
+                    alt_funding_data,
+                    enable_optimizations,
+                    optimization_metric
                 )
             else:
-                # Use configured EMA window
+                # Use configured EMA window with enhanced strategy
                 best_result = backtest_relative_momentum_pair(
                     data[base_symbol],
                     data[alt_symbol],
@@ -308,8 +362,28 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
                     config['execution']['slippage'],
                     freq,
                     base_funding_data,
-                    alt_funding_data
+                    alt_funding_data,
+                    enable_optimizations
                 )
+
+            # Show optimization comparison for the first pair
+            first_pair = f"{config['pairs'][0]['base']}/{config['pairs'][0]['alt'].replace('USDT', '')}"
+            if pair_name == first_pair:
+                try:
+                    comparison = create_optimized_strategy_comparison(
+                        data[base_symbol],
+                        data[alt_symbol],
+                        best_result['ema_window'],
+                        pair_config['allocation_weight'],
+                        config['execution']['fees'],
+                        config['execution']['slippage'],
+                        freq,
+                        base_funding_data,
+                        alt_funding_data
+                    )
+                    print_optimization_comparison(comparison, pair_name)
+                except Exception as e:
+                    logger.warning(f"Failed to generate optimization comparison for {pair_name}: {e}")
 
             # Print and store results
             stats = print_stats(pair_name, best_result, freq)
