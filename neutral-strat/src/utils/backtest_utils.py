@@ -206,6 +206,9 @@ def print_performance_comparison(strategy_returns: pd.Series,
 
     print(f"{'='*80}")
 
+    # Monthly Returns Analysis
+    print_monthly_returns_comparison(strategy_returns, benchmark_returns, strategy_name, benchmark_name)
+
     # Risk-adjusted performance summary
     if not np.isnan(strategy_metrics['sharpe']) and not np.isnan(benchmark_metrics['sharpe']):
         sharpe_improvement = strategy_metrics['sharpe'] - benchmark_metrics['sharpe']
@@ -230,6 +233,76 @@ def print_performance_comparison(strategy_returns: pd.Series,
     print()
 
     return strategy_metrics, benchmark_metrics
+
+
+def print_monthly_returns_comparison(strategy_returns: pd.Series,
+                                   benchmark_returns: pd.Series,
+                                   strategy_name: str,
+                                   benchmark_name: str = 'BTC Buy & Hold'):
+    """Print monthly returns breakdown for strategy vs benchmark"""
+
+    # Align the series
+    aligned_data = pd.concat([strategy_returns, benchmark_returns], axis=1, join='inner').dropna()
+    if len(aligned_data) == 0:
+        print("\n⚠️ No overlapping data for monthly returns comparison")
+        return
+
+    aligned_data.columns = ['Strategy', 'Benchmark']
+
+    # Calculate monthly returns
+    strategy_monthly = aligned_data['Strategy'].resample('ME').apply(lambda x: (1 + x).prod() - 1)
+    benchmark_monthly = aligned_data['Benchmark'].resample('ME').apply(lambda x: (1 + x).prod() - 1)
+
+    if len(strategy_monthly) == 0:
+        print("\n⚠️ Insufficient data for monthly returns analysis")
+        return
+
+    print(f"\n📅 MONTHLY RETURNS COMPARISON")
+    print(f"{'='*80}")
+    print(f"{'Month':<15} {strategy_name[:20]:<22} {benchmark_name[:20]:<22} {'Outperformance':<15}")
+    print(f"{'-'*80}")
+
+    total_months = 0
+    outperforming_months = 0
+
+    for date, strat_ret in strategy_monthly.items():
+        bench_ret = benchmark_monthly.get(date, np.nan)
+
+        if pd.isna(strat_ret) or pd.isna(bench_ret):
+            continue
+
+        total_months += 1
+        outperformance = strat_ret - bench_ret
+
+        if outperformance > 0:
+            outperforming_months += 1
+            outperf_symbol = "✅"
+        else:
+            outperf_symbol = "❌"
+
+        month_str = date.strftime('%Y-%m')
+        print(f"{month_str:<15} {strat_ret:>20.2%} {bench_ret:>20.2%} {outperf_symbol} {outperformance:>+11.2%}")
+
+    # Summary stats
+    if total_months > 0:
+        win_rate = outperforming_months / total_months
+        avg_outperformance = (strategy_monthly - benchmark_monthly).mean()
+
+        print(f"{'-'*80}")
+        print(f"{'MONTHLY SUMMARY':<15}")
+        print(f"{'Win Rate':<15} {win_rate:>49.1%}")
+        print(f"{'Avg Outperformance':<15} {avg_outperformance:>44.2%}")
+        print(f"{'Winning Months':<15} {outperforming_months:>47} / {total_months}")
+
+        # Best and worst months
+        monthly_outperf = strategy_monthly - benchmark_monthly
+        best_month = monthly_outperf.idxmax()
+        worst_month = monthly_outperf.idxmin()
+
+        print(f"{'Best Month':<15} {best_month.strftime('%Y-%m'):<15} {monthly_outperf[best_month]:>+26.2%}")
+        print(f"{'Worst Month':<15} {worst_month.strftime('%Y-%m'):<15} {monthly_outperf[worst_month]:>+26.2%}")
+
+    print(f"{'='*80}")
 
 
 def create_summary_table(individual_results: list, portfolio_results: list = None) -> pd.DataFrame:

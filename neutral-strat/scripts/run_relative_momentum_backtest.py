@@ -399,32 +399,117 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
             initial_capital, None
         )
 
-    # Plot cumulative performance
+    # Plot portfolio values
     print(f"\nBacktest Date Range: {df_all.index.min().strftime('%Y-%m-%d')} → {df_all.index.max().strftime('%Y-%m-%d')}")
 
-    plt.figure(figsize=(14, 8))
-
-    # Individual strategies
-    for col in df_all.columns:
-        (1 + df_all[col]).cumprod().plot(ax=plt.gca(), linewidth=1.2, alpha=0.8, label=col)
-
-    # Portfolios
-    (1 + equal_portfolio_returns).cumprod().plot(
-        ax=plt.gca(), linewidth=3, linestyle='--', color='black', label='Equal-Weight Portfolio'
+    plot_portfolio_performance(
+        df_all, equal_portfolio_returns, vol_scaled_portfolio_returns,
+        benchmark_returns if len(benchmark_returns) > 0 else None,
+        initial_capital
     )
-    (1 + vol_scaled_portfolio_returns).cumprod().plot(
-        ax=plt.gca(), linewidth=3, linestyle='-.', color='red', label='Vol-Scaled Portfolio'
-    )
-
-    plt.title("Relative Momentum Strategy: Cumulative Performance", fontsize=14, weight='bold')
-    plt.ylabel("Growth (×)")
-    plt.xlabel("Date")
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.tight_layout()
-    plt.show()
 
     return results_table
+
+
+def plot_portfolio_performance(individual_returns, equal_portfolio_returns, vol_scaled_portfolio_returns,
+                              benchmark_returns=None, initial_capital=10000):
+    """Plot comprehensive portfolio performance analysis"""
+
+    # Create subplots
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+    fig.suptitle("Portfolio Performance Analysis", fontsize=16, weight='bold')
+
+    # 1. Portfolio Values (Top Left)
+    eq_portfolio_value = initial_capital * (1 + equal_portfolio_returns).cumprod()
+    vs_portfolio_value = initial_capital * (1 + vol_scaled_portfolio_returns).cumprod()
+
+    ax1.plot(eq_portfolio_value.index, eq_portfolio_value, linewidth=3, color='black',
+             linestyle='--', label='Equal-Weight Portfolio', alpha=0.9)
+    ax1.plot(vs_portfolio_value.index, vs_portfolio_value, linewidth=3, color='red',
+             linestyle='-.', label='Vol-Scaled Portfolio', alpha=0.9)
+
+    if benchmark_returns is not None:
+        bench_portfolio_value = initial_capital * (1 + benchmark_returns).cumprod()
+        bench_portfolio_value = bench_portfolio_value.reindex(eq_portfolio_value.index).ffill()
+        ax1.plot(bench_portfolio_value.index, bench_portfolio_value, linewidth=2, color='blue',
+                 label='BTC Buy & Hold', alpha=0.8)
+
+    ax1.set_title("Portfolio Value Over Time", fontweight='bold')
+    ax1.set_ylabel("Portfolio Value ($)")
+    ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'${x:,.0f}'))
+    ax1.grid(True, alpha=0.3)
+    ax1.legend()
+
+    # 2. Cumulative Returns (Top Right)
+    (1 + equal_portfolio_returns).cumprod().plot(ax=ax2, linewidth=3, color='black',
+                                                  linestyle='--', label='Equal-Weight Portfolio')
+    (1 + vol_scaled_portfolio_returns).cumprod().plot(ax=ax2, linewidth=3, color='red',
+                                                       linestyle='-.', label='Vol-Scaled Portfolio')
+
+    # Individual strategies with lower alpha
+    for col in individual_returns.columns:
+        (1 + individual_returns[col]).cumprod().plot(ax=ax2, linewidth=1.2, alpha=0.6, label=col)
+
+    if benchmark_returns is not None:
+        bench_cumret = (1 + benchmark_returns).reindex(individual_returns.index).fillna(0)
+        (1 + bench_cumret).cumprod().plot(ax=ax2, linewidth=2, color='blue',
+                                          label='BTC Buy & Hold', alpha=0.8)
+
+    ax2.set_title("Cumulative Returns", fontweight='bold')
+    ax2.set_ylabel("Growth (×)")
+    ax2.grid(True, alpha=0.3)
+    ax2.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    # 3. Drawdown Analysis (Bottom Left)
+    eq_cumret = (1 + equal_portfolio_returns).cumprod()
+    vs_cumret = (1 + vol_scaled_portfolio_returns).cumprod()
+
+    eq_dd = (eq_cumret - eq_cumret.cummax()) / eq_cumret.cummax()
+    vs_dd = (vs_cumret - vs_cumret.cummax()) / vs_cumret.cummax()
+
+    ax3.fill_between(eq_dd.index, eq_dd, 0, alpha=0.3, color='black', label='Equal-Weight DD')
+    ax3.fill_between(vs_dd.index, vs_dd, 0, alpha=0.3, color='red', label='Vol-Scaled DD')
+
+    if benchmark_returns is not None:
+        bench_cumret = (1 + benchmark_returns).reindex(eq_dd.index).ffill().cumprod()
+        bench_dd = (bench_cumret - bench_cumret.cummax()) / bench_cumret.cummax()
+        ax3.fill_between(bench_dd.index, bench_dd, 0, alpha=0.3, color='blue', label='BTC DD')
+
+    ax3.set_title("Drawdown Analysis", fontweight='bold')
+    ax3.set_ylabel("Drawdown (%)")
+    ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: f'{x:.1%}'))
+    ax3.grid(True, alpha=0.3)
+    ax3.legend()
+
+    # 4. Rolling Sharpe Ratio (Bottom Right)
+    window = 30  # 30-day rolling window
+    eq_rolling_sharpe = equal_portfolio_returns.rolling(window).mean() / equal_portfolio_returns.rolling(window).std() * np.sqrt(365)
+    vs_rolling_sharpe = vol_scaled_portfolio_returns.rolling(window).mean() / vol_scaled_portfolio_returns.rolling(window).std() * np.sqrt(365)
+
+    ax4.plot(eq_rolling_sharpe.index, eq_rolling_sharpe, linewidth=2, color='black',
+             linestyle='--', label='Equal-Weight', alpha=0.8)
+    ax4.plot(vs_rolling_sharpe.index, vs_rolling_sharpe, linewidth=2, color='red',
+             linestyle='-.', label='Vol-Scaled', alpha=0.8)
+
+    if benchmark_returns is not None:
+        bench_rolling_sharpe = benchmark_returns.rolling(window).mean() / benchmark_returns.rolling(window).std() * np.sqrt(365)
+        bench_rolling_sharpe = bench_rolling_sharpe.reindex(eq_rolling_sharpe.index)
+        ax4.plot(bench_rolling_sharpe.index, bench_rolling_sharpe, linewidth=2, color='blue',
+                 label='BTC', alpha=0.8)
+
+    ax4.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
+    ax4.set_title(f"Rolling {window}-Day Sharpe Ratio", fontweight='bold')
+    ax4.set_ylabel("Sharpe Ratio")
+    ax4.grid(True, alpha=0.3)
+    ax4.legend()
+
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.93)
+
+    # Save the plot
+    plt.savefig("results/portfolio_performance_analysis.png", dpi=300, bbox_inches='tight')
+    print("\n📊 Portfolio performance chart saved to: results/portfolio_performance_analysis.png")
+    plt.show()
 
 
 if __name__ == "__main__":
