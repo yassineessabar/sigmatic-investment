@@ -35,7 +35,7 @@ strategy:
   optimization:
     enabled: true                # Same optimization logic
     window_range_start: 1
-    window_range_end: 30
+    window_range_end: 30         # Back to what worked for shorter periods
     metric: "sharpe"             # Focus on Sharpe ratio optimization
   enhancements:
     enabled: true                # Enable strategy optimizations
