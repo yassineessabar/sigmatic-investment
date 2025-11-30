@@ -1,0 +1,126 @@
+# Live Trading Configuration - PERFECTLY ALIGNED with V1 Backtest Strategy
+# Same strategy logic, parameters, and risk management as the 2.54 Sharpe backtest
+# Only execution environment changes between test and live modes
+
+# =====================================================
+# IDENTICAL STRATEGY PARAMETERS (From V1 Backtest)
+# =====================================================
+
+# Trading pairs - EXACT same as successful backtest
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 10             # IDENTICAL to backtest
+    allocation_weight: 0.75    # IDENTICAL to backtest
+    max_notional: 1000         # IDENTICAL to backtest
+  - base: BTCUSDT
+    alt: ETHUSDT
+    ema_window: 12             # IDENTICAL to backtest
+    allocation_weight: 0.75    # IDENTICAL to backtest
+    max_notional: 1000         # IDENTICAL to backtest
+  - base: BTCUSDT
+    alt: SOLUSDT
+    ema_window: 8              # IDENTICAL to backtest
+    allocation_weight: 0.75    # IDENTICAL to backtest
+    max_notional: 1000         # IDENTICAL to backtest
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 15             # IDENTICAL to backtest
+    allocation_weight: 0.75    # IDENTICAL to backtest
+    max_notional: 1000         # IDENTICAL to backtest
+
+# Strategy configuration - IDENTICAL to V1 backtest
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true                # SAME as backtest
+    window_range_start: 1        # SAME as backtest
+    window_range_end: 30         # SAME as backtest
+    metric: "sharpe"             # SAME as backtest
+  enhancements:
+    enabled: true                # SAME as backtest - all optimizations ON
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: true
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
+
+# Portfolio settings - IDENTICAL to V1 backtest
+portfolio:
+  equal_weight: true           # SAME as backtest
+  volatility_scaled: true      # SAME as backtest
+  rebalance_frequency: "daily" # SAME as backtest
+
+# Risk management - IDENTICAL to V1 backtest
+risk:
+  max_daily_dd: 0.05           # SAME as backtest (5%)
+  max_total_dd: 0.10           # SAME as backtest (10%)
+  leverage_limit: 10.0         # SAME as backtest
+  max_position_size: 0.2       # SAME as backtest (20%)
+  stop_loss: 0.02              # SAME as backtest (2%)
+
+# Futures settings - IDENTICAL to V1 backtest
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+# =====================================================
+# EXECUTION SETTINGS (Only difference from backtest)
+# =====================================================
+
+execution:
+  # Core trading costs - SAME as backtest
+  slippage: 0.0005             # SAME as backtest
+  fees: 0.0004                 # SAME as backtest
+
+  # Mode-specific execution settings
+  test_mode:
+    interval: "1d"             # IDENTICAL frequency to backtest
+    mode: "paper"
+    check_frequency_minutes: 1440  # Daily checks (24*60 minutes)
+    position_size_multiplier: 1.0  # IDENTICAL size to backtest
+    use_spot_trading: false         # Use futures like backtest
+    simulate_execution: true        # Paper trading mode
+
+  live_mode:
+    interval: "1d"             # IDENTICAL frequency to backtest
+    mode: "live"
+    check_frequency_minutes: 1440  # IDENTICAL to backtest (daily)
+    position_size_multiplier: 1.0  # IDENTICAL size to backtest
+    confirmation_required: false   # Auto-execute (like backtest)
+
+# Capital - IDENTICAL to backtest
+initial_capital: 10000         # IDENTICAL to backtest ($10,000)
+
+# =====================================================
+# ENVIRONMENT SETTINGS
+# =====================================================
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    api_key: "${BINANCE_TESTNET_API_KEY}"
+    api_secret: "${BINANCE_TESTNET_API_SECRET}"
+    demo_trading: true         # Paper trading for test mode
+
+  live_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    api_key: "${BINANCE_LIVE_API_KEY}"
+    api_secret: "${BINANCE_LIVE_API_SECRET}"
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/live_aligned_trading.log"
+
+# Performance tracking - Monitor live vs backtest
+monitoring:
+  track_performance: true
+  compare_to_backtest: true
+  alert_on_deviation: true
+  max_performance_deviation: 0.5  # Alert if Sharpe deviates >50% from backtest
