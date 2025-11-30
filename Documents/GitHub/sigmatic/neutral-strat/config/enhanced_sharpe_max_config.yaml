@@ -1,0 +1,75 @@
+# Enhanced Sharpe Maximization Strategy
+# Built on successful optimal_sharpe_v3 with Sharpe-specific optimizations
+# Target: Push beyond 1.61 to >2.0 Sharpe
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Keep optimal window
+    allocation_weight: 0.6  # Reduced for higher Sharpe
+    max_notional: 2000     # Reduced for precision
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 1          # Same fast timing
+    allocation_weight: 0.4  # Reduced for stability
+    max_notional: 1500     # Conservative
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 1        # Proven optimal
+    metric: "sharpe"           # Pure Sharpe focus
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Keep proven features
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: false         # Disable for stability
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
+
+portfolio:
+  equal_weight: true          # Keep proven approach
+  volatility_scaled: true     # Keep volatility scaling
+  rebalance_frequency: "daily"
+
+# Enhanced Risk Management for Maximum Sharpe
+risk:
+  max_daily_dd: 0.007        # Tighter: 0.7% vs 1.0%
+  max_total_dd: 0.13         # Tighter: 13% vs 18%
+  leverage_limit: 7.0        # Reduced from 10.0
+  max_position_size: 0.16    # Reduced from 25%
+  stop_loss: 0.01            # Tighter: 1% vs 1.5%
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.000003         # Even lower than 0.00001
+  fees: 0.000003             # Even lower fees
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/enhanced_sharpe_max.log"

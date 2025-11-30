@@ -1,0 +1,150 @@
+# Extreme Minimal Drawdown Strategy
+# Targeting absolute minimum possible drawdown with crypto momentum
+
+pairs:
+  - base: BTCUSDT
+    alt: ADAUSDT  # Most stable historical pair
+    ema_window: 20             # Ultra-slow signals
+    allocation_weight: 0.2     # Minimal allocation
+    max_notional: 800          # Tiny positions
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 15     # Only ultra-slow signals
+    window_range_end: 25       # Maximum stability
+    metric: "calmar"
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: false
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
+
+    # Extreme drawdown control
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.003             # 0.3% daily limit
+      lookback_period: 5              # Very short lookback
+      position_scale_factor: 0.1      # 90% reduction during any DD
+      emergency_exit_threshold: 0.04  # Exit all at 4% DD
+
+    # Ultra-defensive volatility sizing
+    volatility_sizing:
+      target_volatility: 0.12         # Ultra-low 12% annual vol
+      lookback_period: 10             # Short vol estimation
+      min_allocation: 0.05            # Go to 5% minimum
+      max_allocation: 0.25            # Cap at 25%
+      vol_adjustment_speed: 0.8       # Very fast adjustments
+
+    # Maximum strength filters
+    risk_filters:
+      momentum_strength_threshold: 0.8 # Only strongest signals
+      volatility_regime_filter: true
+      correlation_regime_filter: true
+      market_stress_filter: true
+      trend_quality_filter: true
+      liquidity_filter: true
+
+    # Extreme regime detection
+    regime_detection:
+      enabled: true
+      volatility_lookback: 5           # Ultra-short detection
+      correlation_lookback: 3          # Instant correlation monitoring
+      stress_indicator_threshold: 0.15 # Ultra-low stress threshold
+      position_reduction_in_bad_regime: 0.01  # 99% reduction
+
+portfolio:
+  equal_weight: true
+  volatility_scaled: true
+  rebalance_frequency: "daily"
+
+  risk_controls:
+    momentum_decay: 0.75             # Very fast signal decay
+    position_consistency: false
+
+    # Maximum protective overlays
+    market_regime_overlay: true
+    volatility_spike_protection: true
+    correlation_spike_protection: true
+    momentum_deterioration_protection: true
+
+  # Maximum emergency controls
+  emergency_controls:
+    enabled: true
+    total_portfolio_dd_limit: 0.08   # 8% portfolio DD limit
+    rapid_dd_protection: true
+    position_pause_threshold: 0.05   # Pause at 5% DD
+    complete_exit_threshold: 0.07    # Exit everything at 7% DD
+
+risk:
+  max_daily_dd: 0.002              # 0.2% daily drawdown limit
+  max_total_dd: 0.08               # 8% total drawdown target
+  leverage_limit: 2.0              # Minimal leverage
+  max_position_size: 0.08          # Tiny 8% positions
+  stop_loss: 0.015                 # 1.5% stop loss
+
+  # Ultra-conservative metrics
+  var_limit: 0.005                 # 0.5% daily VaR limit
+  stress_test_factor: 5.0          # 5x stress scenario
+  concentration_limit: 1.0
+
+  # Multi-layer protection
+  risk_layers:
+    layer_1_daily_limit: 0.002     # 0.2% daily
+    layer_2_weekly_limit: 0.008    # 0.8% weekly
+    layer_3_monthly_limit: 0.02    # 2% monthly
+    layer_4_total_limit: 0.08      # 8% total
+
+  # Maximum protective measures
+  protective_measures:
+    correlation_monitoring: true
+    volatility_spike_detection: true
+    momentum_weakness_detection: true
+    liquidity_monitoring: true
+    market_crash_detection: true
+    systematic_risk_monitoring: true
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0002               # Higher slippage for safety
+  fees: 0.0002
+
+  # Ultra-conservative execution
+  market_impact: 0.0003          # High impact assumption
+  execution_delay: 2.0           # 2-day execution delay
+  partial_fill_factor: 0.7      # Conservative fills
+
+  # Minimal execution controls
+  execution_controls:
+    max_order_size: 0.03         # Tiny 3% order sizes
+    volatility_adjusted_sizing: true
+    smart_timing: true
+    risk_first_routing: true
+    liquidity_first_execution: true
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/extreme_minimal_dd_trading.log"

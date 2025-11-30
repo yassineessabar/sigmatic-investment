@@ -1,0 +1,70 @@
+# Single Pair Maximum Sharpe Strategy
+# Focus on best performer (AVAX) for 2.0+ Sharpe
+# Concentrated approach for maximum risk-adjusted returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Optimal signal timing
+    allocation_weight: 1.5  # Concentrated allocation
+    max_notional: 5000     # Higher concentration
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 2        # Allow slight optimization
+    metric: "sharpe"           # Pure Sharpe focus
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Quality signals
+    volatility_position_sizing: true    # Dynamic sizing
+    rsi_momentum_filter: true           # Signal filtering
+    dynamic_position_sizing: true       # Optimal sizing
+    trend_momentum_boost: true          # Momentum amplification
+    stop_loss_mechanism: true           # Risk control
+    enhanced_cost_calculation: true     # Precise modeling
+
+portfolio:
+  equal_weight: false         # Single pair concentration
+  volatility_scaled: true     # Volatility targeting
+  rebalance_frequency: "daily"
+
+# Balanced Risk for High Sharpe
+risk:
+  max_daily_dd: 0.015        # 1.5% daily DD
+  max_total_dd: 0.20         # 20% max DD
+  leverage_limit: 12.0       # Moderate-high leverage
+  max_position_size: 0.40    # 40% concentration
+  stop_loss: 0.02            # 2% stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2023-01-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00001          # Low costs
+  fees: 0.00001              # Low fees
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/single_pair_max_sharpe.log"

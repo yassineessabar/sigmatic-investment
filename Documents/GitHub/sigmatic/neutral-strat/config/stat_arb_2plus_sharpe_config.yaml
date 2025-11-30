@@ -1,0 +1,115 @@
+# Statistical Arbitrage Strategy - Target 2+ Sharpe
+# Based on market-neutral mean reversion research achieving 2+ Sharpe
+# Implements residual returns approach with long/short portfolio
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Daily reversal signal
+    allocation_weight: 0.4  # Conservative stat arb allocation
+    max_notional: 2000
+  - base: BTCUSDT
+    alt: ETHUSDT
+    ema_window: 1          # Same timeframe for all pairs
+    allocation_weight: 0.4
+    max_notional: 2000
+  - base: BTCUSDT
+    alt: SOLUSDT
+    ema_window: 1
+    allocation_weight: 0.3
+    max_notional: 1500
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 1
+    allocation_weight: 0.3
+    max_notional: 1500
+
+strategy:
+  type: "statistical_arbitrage_mean_reversion"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 1        # 1-day formation period (optimal from research)
+    metric: "sharpe"           # Target >2.0 Sharpe
+  enhancements:
+    enabled: true
+    # Statistical arbitrage specific enhancements
+    market_neutral_signal: true        # Calculate residual returns
+    mean_reversion_strength: true      # Measure reversion strength
+    long_short_portfolio: true         # Top/bottom quintile selection
+    transaction_cost_aware: true       # Include realistic costs
+    volatility_position_sizing: false  # Equal weight for stat arb
+    rsi_momentum_filter: false         # No momentum filters for reversal
+    dynamic_position_sizing: false     # Fixed sizing for stat arb
+    trend_momentum_boost: false        # Opposite of mean reversion
+    stop_loss_mechanism: false         # Let reversions play out
+    enhanced_cost_calculation: true    # Precise cost modeling
+
+portfolio:
+  equal_weight: true          # Equal weight long/short arms
+  volatility_scaled: false    # Raw stat arb signals
+  rebalance_frequency: "daily" # Daily rebalancing per research
+
+# Statistical Arbitrage Risk Management
+risk:
+  max_daily_dd: 0.03         # 3% daily DD for stat arb
+  max_total_dd: 0.12         # 12% total DD target
+  leverage_limit: 4.0        # Moderate leverage for stat arb
+  max_position_size: 0.25    # 25% per position
+  stop_loss: 0.05            # 5% position stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-01-01"   # Longer training period
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0005           # 5 bps per research paper
+  fees: 0.0005               # 5 bps transaction costs
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+# Statistical Arbitrage Parameters
+statistical_arbitrage:
+  # Signal generation
+  formation_period: 1        # 1-day formation per research
+  holding_period: 1          # 1-day holding per research
+
+  # Portfolio construction
+  long_percentile: 0.2       # Long bottom 20% (underperformers)
+  short_percentile: 0.8      # Short top 20% (outperformers)
+
+  # Market neutrality
+  market_neutral_method: "cross_sectional"  # Subtract cross-sectional mean
+  residual_calculation: "relative_returns"  # Use relative returns method
+
+  # Risk controls
+  max_turnover: 2.0          # 200% daily turnover limit
+  position_concentration: 0.4 # Max 40% in single position
+
+  # Performance targets
+  target_sharpe: 2.0         # Target Sharpe ratio
+  target_alpha_pct: 0.15     # 15% alpha target
+
+  # Transaction costs
+  commission_bps: 5          # 5 basis points per research
+  market_impact_bps: 2       # 2 bps market impact
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/stat_arb_2plus_sharpe.log"

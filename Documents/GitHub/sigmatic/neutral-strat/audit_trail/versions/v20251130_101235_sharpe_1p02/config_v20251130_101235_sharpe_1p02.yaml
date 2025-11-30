@@ -1,0 +1,132 @@
+# Ultra High Sharpe Ratio Configuration
+# Maximum risk-adjusted returns with ultra-aggressive parameters
+
+# =====================================================
+# ULTRA-OPTIMIZED STRATEGY PARAMETERS
+# =====================================================
+
+# Trading pairs - Ultra-aggressive allocation
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 6
+    allocation_weight: 1.0    # Maximum allocation
+    max_notional: 3000        # Higher notional
+  - base: BTCUSDT
+    alt: ETHUSDT
+    ema_window: 9
+    allocation_weight: 0.9    # Skip this pair due to negative performance
+    max_notional: 3000
+  - base: BTCUSDT
+    alt: SOLUSDT
+    ema_window: 2
+    allocation_weight: 0.95   # Near maximum for volatility
+    max_notional: 3000
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 3
+    allocation_weight: 1.0    # Maximum allocation
+    max_notional: 3000
+
+# Strategy configuration - Ultra-aggressive
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 10        # Very short range for fastest signals
+    metric: "sharpe"
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: false  # Disabled for more aggressive trading
+    dynamic_position_sizing: true
+    trend_momentum_boost: true
+    stop_loss_mechanism: false  # Disabled completely
+    enhanced_cost_calculation: false
+
+# Portfolio settings - Ultra-aggressive
+portfolio:
+  equal_weight: false
+  volatility_scaled: true
+  rebalance_frequency: "daily"
+
+# Risk management - Very high risk tolerance
+risk:
+  max_daily_dd: 0.12           # 12% max daily drawdown
+  max_total_dd: 0.20           # 20% max total drawdown
+  leverage_limit: 20.0         # Very high leverage
+  max_position_size: 0.4       # 40% max position size
+  stop_loss: 0.05              # 5% stop loss (loose)
+
+# Futures settings
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+# Backtest settings
+backtest:
+  start_date: "2022-01-01"
+  end_date: null
+  initial_capital: 10000
+  freq: 365
+
+# =====================================================
+# ULTRA-LOW COST EXECUTION
+# =====================================================
+
+execution:
+  # Minimal costs for maximum trading frequency
+  slippage: 0.0002             # Very low slippage assumption
+  fees: 0.0002                 # VIP fees (maker only)
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+  test_mode:
+    interval: "30m"             # More frequent checking
+    mode: "paper"
+    check_frequency_minutes: 30
+    position_size_multiplier: 0.01
+    use_spot_trading: true
+    simulate_execution: true
+
+  live_mode:
+    interval: "1d"
+    mode: "live"
+    check_frequency_minutes: 60  # More frequent live checks
+    position_size_multiplier: 1.0
+    confirmation_required: false  # No confirmation for speed
+
+# =====================================================
+# ENVIRONMENT SETTINGS
+# =====================================================
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    api_key: "${BINANCE_TESTNET_API_KEY}"
+    api_secret: "${BINANCE_TESTNET_API_SECRET}"
+    demo_trading: true
+
+  live_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    api_key: "${BINANCE_LIVE_API_KEY}"
+    api_secret: "${BINANCE_LIVE_API_SECRET}"
+
+# Logging
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_sharpe_trading.log"
+
+# Monitoring
+monitoring:
+  status_interval: 300          # 5 minutes
+  daily_reports: true
+  performance_tracking: true

@@ -1,0 +1,75 @@
+# Aggressive Sharpe Maximization Strategy
+# Push for 2.0+ Sharpe with calculated aggression
+# Based on successful framework with Sharpe-focused optimizations
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Optimal fast signal
+    allocation_weight: 1.0  # Full allocation for best performer
+    max_notional: 3000     # Increased for higher returns
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 1          # Same timing
+    allocation_weight: 0.8  # Strong secondary allocation
+    max_notional: 2500     # Increased allocation
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 1        # Optimal window
+    metric: "sharpe"           # Sharpe maximization
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Keep quality
+    volatility_position_sizing: true    # Dynamic sizing
+    rsi_momentum_filter: true           # Signal quality
+    dynamic_position_sizing: true       # Optimal sizing
+    trend_momentum_boost: true          # Enable for higher returns
+    stop_loss_mechanism: true           # Risk control
+    enhanced_cost_calculation: true     # Precise costs
+
+portfolio:
+  equal_weight: false         # Allow optimized weighting
+  volatility_scaled: true     # Volatility scaling
+  rebalance_frequency: "daily"
+
+# Aggressive Risk Management for Maximum Sharpe
+risk:
+  max_daily_dd: 0.02         # 2% daily DD (aggressive but controlled)
+  max_total_dd: 0.15         # 15% max DD
+  leverage_limit: 15.0       # Higher leverage for returns
+  max_position_size: 0.35    # 35% max position (aggressive)
+  stop_loss: 0.025           # 2.5% stops (wider for momentum)
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2023-01-01"   # Recent favorable period
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.000001         # Best execution
+  fees: 0.000001             # Minimal costs
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/aggressive_sharpe_max.log"

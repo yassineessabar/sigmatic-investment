@@ -1,0 +1,158 @@
+# Enhanced Signal Generation Configuration
+# Advanced multi-timeframe momentum with superior signal quality
+
+pairs:
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 13             # Optimized from previous results
+    allocation_weight: 0.6     # Conservative base allocation
+    max_notional: 4000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 10     # Focus on proven range
+    window_range_end: 16       # Narrow optimization for stability
+    metric: "sharpe"           # Optimize for signal quality
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: true           # Enable momentum boost
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
+
+    # ADVANCED SIGNAL ENHANCEMENTS
+    advanced_signal_generation:
+      enabled: true
+
+      # Multi-timeframe signal confirmation
+      timeframe_confirmation:
+        fast_ema_multiplier: 0.7         # 13 * 0.7 = ~9 day fast EMA
+        slow_ema_multiplier: 2.5         # 13 * 2.5 = ~32 day slow EMA
+        very_slow_ema_multiplier: 5.0    # 13 * 5.0 = ~65 day trend EMA
+        confirmation_threshold: 0.67     # 2 of 3 timeframes must agree
+
+      # Enhanced momentum strength filters
+      momentum_filters:
+        rsi_oversold: 25                 # Enhanced RSI bounds
+        rsi_overbought: 75
+        macd_confirmation: true          # Require MACD alignment
+        momentum_acceleration: true      # Check momentum acceleration
+        volume_confirmation: false       # Disable for crypto (data issues)
+
+      # Adaptive regime detection
+      regime_detection:
+        volatility_lookback: 25          # Volatility regime detection
+        correlation_lookback: 15         # Cross-asset correlation
+        trend_strength_lookback: 30      # Trend strength measurement
+        market_stress_threshold: 1.5     # Market stress detection
+
+      # Signal quality scoring
+      signal_quality:
+        min_signal_strength: 0.4         # Minimum signal strength required
+        momentum_score_weight: 0.4       # Weight of momentum in signal
+        trend_score_weight: 0.3          # Weight of trend in signal
+        volatility_score_weight: 0.3     # Weight of vol regime in signal
+
+      # Advanced position sizing based on signal strength
+      signal_based_sizing:
+        enabled: true
+        base_size_multiplier: 1.0        # Base size when signal = 1.0
+        min_size_multiplier: 0.3         # Minimum size for weak signals
+        max_size_multiplier: 1.5         # Maximum size for strong signals
+        signal_decay_factor: 0.95        # Daily signal decay
+
+    # Enhanced momentum boost with signal quality
+    trend_momentum_boost:
+      enabled: true
+      momentum_threshold: 0.02          # 2% momentum threshold
+      max_boost: 1.8                    # Maximum 80% boost
+      min_boost: 0.7                    # Minimum 30% reduction for weak signals
+      trend_alignment_bonus: 0.2        # Bonus when all timeframes align
+
+    # Smart volatility-based position sizing
+    volatility_sizing:
+      target_volatility: 0.25           # Target 25% annual vol
+      lookback_period: 20               # 20-day vol estimation
+      min_allocation: 0.2               # Never go below 20%
+      max_allocation: 1.0               # Cap at 100%
+      vol_adjustment_speed: 0.4         # Moderate adjustments
+      regime_multiplier: true           # Adjust based on vol regime
+
+    # Advanced drawdown control with signal-based scaling
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.015               # 1.5% daily limit
+      lookback_period: 15               # 15-day rolling DD monitoring
+      position_scale_factor: 0.5        # 50% reduction during DD
+      signal_quality_override: true     # Maintain strong signals during minor DD
+      emergency_exit_threshold: 0.08    # Emergency exit at 8% DD
+
+portfolio:
+  equal_weight: true
+  volatility_scaled: true
+  rebalance_frequency: "daily"
+
+  # Smart portfolio construction with signal integration
+  risk_controls:
+    momentum_decay: 0.90               # Signal persistence
+    position_consistency: true        # Consistent position sizing
+    signal_quality_weighting: true    # Weight positions by signal quality
+
+  # Dynamic risk scaling based on signal environment
+  dynamic_scaling:
+    enabled: true
+    signal_environment_detection: true  # Detect good/bad signal periods
+    low_signal_quality_reduction: 0.6  # Reduce exposure in poor signal periods
+    high_signal_quality_boost: 1.2     # Boost exposure in strong signal periods
+
+risk:
+  max_daily_dd: 0.012                # 1.2% daily drawdown limit
+  max_total_dd: 0.15                 # 15% total drawdown target
+  leverage_limit: 6.0                # Moderate leverage
+  max_position_size: 0.4             # Conservative position sizing
+  stop_loss: 0.025                   # 2.5% stop loss
+
+  # Signal-aware risk management
+  signal_based_risk:
+    enabled: true
+    weak_signal_position_limit: 0.2   # Limit positions on weak signals
+    strong_signal_position_boost: 1.3  # Allow larger positions on strong signals
+    signal_correlation_limit: 0.8     # Limit correlated signal exposure
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001
+  fees: 0.0001
+
+  # Smart execution based on signal quality
+  execution_controls:
+    signal_based_timing: true         # Time entries based on signal strength
+    quality_adjusted_slippage: true   # Lower slippage for high-quality signals
+    adaptive_order_sizing: true       # Adaptive order sizes
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/enhanced_signals_trading.log"

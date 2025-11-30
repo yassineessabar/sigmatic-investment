@@ -1,0 +1,80 @@
+# Ultra High Sharpe Strategy Configuration
+# Implementing statistical arbitrage principles with existing framework
+# Target: 2+ Sharpe ratio with mean-reversion approach
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # 1-day mean reversion signal
+    allocation_weight: 0.3  # Conservative equal weight
+    max_notional: 1500
+  - base: BTCUSDT
+    alt: ETHUSDT
+    ema_window: 1          # Same timeframe all pairs
+    allocation_weight: 0.3
+    max_notional: 1500
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 1          # Fast mean reversion
+    allocation_weight: 0.3
+    max_notional: 1500
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 1        # 1-day formation period per research
+    metric: "sharpe"           # Pure Sharpe optimization
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: false # Simple signals for stat arb
+    volatility_position_sizing: false   # Equal weighting
+    rsi_momentum_filter: true          # Quality control
+    dynamic_position_sizing: false     # Fixed sizing
+    trend_momentum_boost: false        # Counter-trend strategy
+    stop_loss_mechanism: false         # Let reversions work
+    enhanced_cost_calculation: true    # Include realistic costs
+
+portfolio:
+  equal_weight: true          # Market neutral equal weighting
+  volatility_scaled: false    # Raw signals for mean reversion
+  rebalance_frequency: "daily" # Daily rebalancing per research
+
+# Ultra-Conservative Risk for High Sharpe
+risk:
+  max_daily_dd: 0.02         # 2% daily DD for high Sharpe
+  max_total_dd: 0.08         # 8% max DD for stat arb
+  leverage_limit: 3.0        # Low leverage for stability
+  max_position_size: 0.20    # 20% position limit
+  stop_loss: 0.03            # Tight risk control
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2023-01-01"   # Shorter recent period for optimization
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0005           # 5 bps per research
+  fees: 0.0005               # 5 bps transaction costs
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_high_sharpe.log"

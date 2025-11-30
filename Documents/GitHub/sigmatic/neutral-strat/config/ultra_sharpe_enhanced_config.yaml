@@ -1,0 +1,96 @@
+# Ultra Enhanced Sharpe Strategy Configuration
+# Advanced optimizations for maximum risk-adjusted returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Ultra-fast primary signal
+    allocation_weight: 1.4  # Increased weight for best performer
+    max_notional: 8000     # Higher notional for better leverage
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 2          # Slightly slower for diversification
+    allocation_weight: 1.1  # Moderate weight
+    max_notional: 6000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 4        # Even faster signals for better Sharpe
+    metric: "sharpe"           # Focus purely on risk-adjusted returns
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Enhanced signal quality
+    volatility_position_sizing: true    # Dynamic volatility-based sizing
+    rsi_momentum_filter: true           # Re-enable for better signal quality
+    dynamic_position_sizing: true       # Advanced position sizing
+    trend_momentum_boost: true          # Momentum amplification
+    stop_loss_mechanism: true           # Re-enable for risk control
+    enhanced_cost_calculation: true     # Better cost modeling
+
+portfolio:
+  equal_weight: false         # Use optimized weights
+  volatility_scaled: true     # Advanced volatility scaling
+  rebalance_frequency: "daily"
+
+# Enhanced risk management for better Sharpe
+risk:
+  max_daily_dd: 0.08         # Lower daily risk for smoother returns
+  max_total_dd: 0.20         # Reduced max drawdown target
+  leverage_limit: 30.0       # Higher leverage for better returns
+  max_position_size: 0.8     # Larger positions when signals are strong
+  stop_loss: 0.04            # Tighter stops for better risk control
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00003          # Even lower slippage assumption
+  fees: 0.00003              # Ultra-low fees for VIP+ accounts
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+# Advanced signal parameters for enhanced Sharpe
+signal_enhancements:
+  # Signal quality thresholds
+  min_signal_strength: 0.6   # Higher threshold for signal quality
+  momentum_confirmation: 0.8  # Strong momentum requirement
+
+  # Volatility regime detection
+  vol_lookback: 20           # Shorter lookback for responsiveness
+  vol_threshold: 1.5         # Volatility regime threshold
+
+  # Market stress detection
+  stress_lookback: 15        # Market stress detection window
+  stress_threshold: 2.0      # Stress threshold multiplier
+
+  # Position sizing enhancements
+  size_multiplier_min: 0.3   # Minimum position size multiplier
+  size_multiplier_max: 2.5   # Maximum position size multiplier
+
+  # Momentum boost parameters
+  momentum_boost_min: 0.8    # Minimum momentum boost
+  momentum_boost_max: 2.2    # Maximum momentum boost
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_sharpe_enhanced.log"

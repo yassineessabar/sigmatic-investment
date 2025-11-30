@@ -1,0 +1,75 @@
+# Optimal Sharpe V3 Strategy - Refined
+# Based on successful target_2plus_sharpe_config with optimizations
+# Target: >2.0 Sharpe, <20% Drawdown
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Proven optimal window
+    allocation_weight: 0.8  # Reduced from 1.0 for stability
+    max_notional: 2500     # Reduced from 3000 for risk control
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 2          # Keep diversification
+    allocation_weight: 0.6  # Reduced from 0.8 for stability
+    max_notional: 2000     # Reduced from 2500 for risk control
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 2        # Keep successful range
+    metric: "sharpe"           # Sharpe focus
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Keep proven enhancements
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: false         # Disable for stability
+    stop_loss_mechanism: true           # Keep risk control
+    enhanced_cost_calculation: true
+
+portfolio:
+  equal_weight: true          # Keep proven equal weighting
+  volatility_scaled: true     # Keep volatility scaling
+  rebalance_frequency: "daily"
+
+# Enhanced Risk Management (tighter than successful config)
+risk:
+  max_daily_dd: 0.01         # Tighter: 1% vs 1.5%
+  max_total_dd: 0.18         # Tighter: 18% vs 22.7%
+  leverage_limit: 10.0       # Reduced from 12.0
+  max_position_size: 0.25    # Reduced from 0.30
+  stop_loss: 0.015           # Tighter: 1.5% vs 2%
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00001          # Improved from 0.00002
+  fees: 0.00001              # Improved from 0.00002
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/optimal_sharpe_v3.log"

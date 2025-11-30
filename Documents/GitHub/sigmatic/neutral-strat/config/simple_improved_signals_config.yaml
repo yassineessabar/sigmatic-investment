@@ -1,0 +1,84 @@
+# Simple Improved Signals Configuration
+# Use original working optimizations with minor enhancements
+
+pairs:
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 13             # From previous best results
+    allocation_weight: 0.75    # Original proven allocation
+    max_notional: 5000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 10
+    window_range_end: 16
+    metric: "sharpe"
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: true           # Original working version
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
+
+    # Basic drawdown control (original)
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.02
+      lookback_period: 20
+      position_scale_factor: 0.6
+
+    # Original volatility sizing (what worked)
+    volatility_sizing:
+      target_volatility: 0.32
+      lookback_period: 25
+      min_allocation: 0.4
+      max_allocation: 1.0
+      vol_adjustment_speed: 0.3
+
+portfolio:
+  equal_weight: true
+  volatility_scaled: true
+  rebalance_frequency: "daily"
+
+  risk_controls:
+    momentum_decay: 0.92
+    position_consistency: true
+
+risk:
+  max_daily_dd: 0.015
+  max_total_dd: 0.20
+  leverage_limit: 10.0                 # Back to higher leverage
+  max_position_size: 0.35
+  stop_loss: 0.04
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00012
+  fees: 0.00012
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/simple_improved_signals_trading.log"

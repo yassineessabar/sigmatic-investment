@@ -1,0 +1,71 @@
+# Enhanced Low Drawdown High Sharpe Strategy
+# Target: 2.0+ Sharpe ratio with <19% maximum drawdown
+# Optimized for 3-year period (2022-2025)
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1              # Ultra-fast signals for high Sharpe
+    allocation_weight: 0.6     # Reduced allocation for lower DD
+    max_notional: 3000         # Conservative sizing
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 3        # Small range for stability
+    metric: "calmar"           # Optimize for return/drawdown ratio
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true   # Signal quality
+    volatility_position_sizing: true     # Critical for DD control
+    rsi_momentum_filter: true            # Quality filter
+    dynamic_position_sizing: true        # Adaptive sizing
+    trend_momentum_boost: false          # Disable for lower DD
+    stop_loss_mechanism: true            # Enable drawdown protection
+    enhanced_cost_calculation: true      # Realistic costs
+
+portfolio:
+  equal_weight: false
+  volatility_scaled: true     # Essential for risk control
+  rebalance_frequency: "daily"
+
+# Conservative Risk Management for <19% DD
+risk:
+  max_daily_dd: 0.01         # 1% daily DD limit (very tight)
+  max_total_dd: 0.18         # 18% max DD target
+  leverage_limit: 4.0        # Conservative leverage
+  max_position_size: 0.20    # 20% max position (small)
+  stop_loss: 0.02            # 2% tight stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001           # Conservative slippage
+  fees: 0.0001               # Conservative fees
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/enhanced_low_dd_high_sharpe.log"

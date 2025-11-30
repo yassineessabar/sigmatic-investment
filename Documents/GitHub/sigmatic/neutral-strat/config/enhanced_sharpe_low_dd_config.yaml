@@ -1,0 +1,75 @@
+# Enhanced Sharpe & Low DD Strategy
+# Target: 2.0+ Sharpe, <18% Drawdown
+# Balanced optimization of risk-adjusted returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Best performing signal
+    allocation_weight: 0.8  # Moderate allocation for best performer
+    max_notional: 2500     # Conservative but workable
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 1          # Same fast timing for consistency
+    allocation_weight: 0.6  # Secondary allocation
+    max_notional: 2000     # Moderate notional
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 1        # Optimal single window
+    metric: "sharpe"           # Pure Sharpe optimization
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Signal quality
+    volatility_position_sizing: true    # Dynamic sizing
+    rsi_momentum_filter: true           # Quality filter
+    dynamic_position_sizing: true       # Advanced sizing
+    trend_momentum_boost: false         # Stability focus
+    stop_loss_mechanism: true           # Risk management
+    enhanced_cost_calculation: true     # Precise costs
+
+portfolio:
+  equal_weight: true          # Market neutral approach
+  volatility_scaled: true     # Risk scaling
+  rebalance_frequency: "daily"
+
+# Balanced Risk Management for High Sharpe + Low DD
+risk:
+  max_daily_dd: 0.012        # 1.2% daily DD limit
+  max_total_dd: 0.15         # 15% max DD target
+  leverage_limit: 8.0        # Balanced leverage
+  max_position_size: 0.20    # 20% max position
+  stop_loss: 0.015           # 1.5% position stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00001          # Very low institutional slippage
+  fees: 0.00001              # Premium execution rates
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/enhanced_sharpe_low_dd.log"
