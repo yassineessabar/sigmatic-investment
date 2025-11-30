@@ -1,0 +1,213 @@
+# Market Neutral Strategy Configuration
+# Designed to minimize correlation with BTC and crypto markets
+# Targets absolute returns independent of market direction
+
+# =====================================================
+# MARKET NEUTRAL PAIR DESIGN
+# =====================================================
+
+pairs:
+  # Long-Short Equity-Style Pairs (Market Neutral)
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 10
+    allocation_weight: 0.5     # Reduced weight for neutrality
+    max_notional: 500          # Smaller notional per pair
+    pair_type: "long_short"    # Force market neutral positioning
+
+  - base: BTCUSDT
+    alt: ETHUSDT
+    ema_window: 12
+    allocation_weight: 0.5
+    max_notional: 500
+    pair_type: "long_short"
+
+  - base: BTCUSDT
+    alt: SOLUSDT
+    ema_window: 8
+    allocation_weight: 0.5
+    max_notional: 500
+    pair_type: "long_short"
+
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 15
+    allocation_weight: 0.5
+    max_notional: 500
+    pair_type: "long_short"
+
+  # Additional Cross-Asset Pairs for Diversification
+  - base: ETHUSDT
+    alt: AVAXUSDT
+    ema_window: 14
+    allocation_weight: 0.3
+    max_notional: 300
+    pair_type: "long_short"
+
+  - base: SOLUSDT
+    alt: ADAUSDT
+    ema_window: 16
+    allocation_weight: 0.3
+    max_notional: 300
+    pair_type: "long_short"
+
+strategy:
+  type: "market_neutral_pairs"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 30
+    metric: "sharpe"
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: false        # Disable for market neutrality
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
+
+    # NEW: Market Neutrality Features
+    market_neutral_constraints:
+      enabled: true
+      max_net_exposure: 0.1           # Max 10% net directional exposure
+      correlation_limit: 0.3          # Force correlation with BTC < 0.3
+      beta_target: 0.0                # Target zero beta
+      rebalance_frequency: "daily"    # Daily neutrality rebalancing
+
+    # Sector Neutrality
+    sector_neutral:
+      enabled: true
+      crypto_exposure_limit: 0.6      # Max 60% crypto sector exposure
+      diversification_bonus: 0.2      # Reward diversification
+
+    # Correlation-Based Position Sizing
+    correlation_sizing:
+      enabled: true
+      target_correlation: 0.0         # Target zero correlation
+      correlation_penalty: 2.0        # Heavy penalty for correlation
+      lookback_period: 60             # 60-day correlation window
+
+portfolio:
+  equal_weight: false                 # Use correlation-optimized weights
+  volatility_scaled: true
+  market_neutral: true                # NEW: Force market neutrality
+  rebalance_frequency: "daily"
+
+  # Market Neutral Portfolio Optimization
+  neutral_optimization:
+    enabled: true
+    target_beta: 0.0                  # Zero beta target
+    max_tracking_error: 0.15          # 15% tracking error limit
+    correlation_threshold: 0.2        # Alert if correlation > 20%
+
+  # Dynamic Hedging
+  dynamic_hedging:
+    enabled: true
+    hedge_ratio: 0.5                  # 50% hedge ratio
+    hedge_frequency: "daily"          # Daily hedge adjustment
+    hedge_threshold: 0.15             # Hedge when beta > 15%
+
+# Enhanced Risk Management for Market Neutrality
+risk:
+  max_daily_dd: 0.03                 # Tighter 3% daily DD
+  max_total_dd: 0.08                 # Tighter 8% total DD
+  leverage_limit: 5.0                # Lower leverage for stability
+  max_position_size: 0.15            # Smaller individual positions
+  stop_loss: 0.015                   # Tighter 1.5% stops
+
+  # Market Neutral Risk Controls
+  exposure_limits:
+    max_gross_exposure: 1.0          # 100% gross (long + short)
+    max_net_exposure: 0.1            # 10% net (long - short)
+    sector_limit: 0.4                # Max 40% in any sector
+    correlation_limit: 0.2           # Max 20% correlation with BTC
+
+  # Stress Testing
+  stress_scenarios:
+    crypto_crash: -0.5               # Test -50% crypto crash
+    correlation_spike: 0.8           # Test 80% correlation spike
+    volatility_surge: 3.0            # Test 3x volatility surge
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+# Capital - IDENTICAL across all modes
+initial_capital: 10000               # IDENTICAL to backtest ($10,000)
+
+backtest:
+  start_date: "2020-01-01"
+  end_date: "2024-12-31"
+  initial_capital: 10000             # IDENTICAL to live/test modes
+  freq: 365
+
+execution:
+  # Core trading costs - IDENTICAL to backtest
+  slippage: 0.0005                   # IDENTICAL to backtest
+  fees: 0.0004                       # IDENTICAL to backtest
+
+  # Mode-specific execution settings - PERFECTLY ALIGNED
+  test_mode:
+    interval: "1d"                   # IDENTICAL frequency to backtest
+    mode: "paper"
+    check_frequency_minutes: 1440    # Daily checks (24*60 minutes) - IDENTICAL
+    position_size_multiplier: 1.0    # IDENTICAL size to backtest
+    use_spot_trading: false          # Use futures like backtest
+    simulate_execution: true         # Paper trading mode
+    offline_mode: true               # No API calls required
+
+  live_mode:
+    interval: "1d"                   # IDENTICAL frequency to backtest
+    mode: "live"
+    check_frequency_minutes: 1440    # IDENTICAL to backtest (daily)
+    position_size_multiplier: 1.0    # IDENTICAL size to backtest
+    confirmation_required: false     # Auto-execute (like backtest)
+
+  # Market Neutral Execution
+  market_neutral_execution:
+    simultaneous_trades: true        # Execute pairs simultaneously
+    hedging_delay: 0                 # No delay for hedging trades
+    correlation_monitoring: true     # Monitor correlation in real-time
+
+  backtest_mode:
+    interval: "1d"                   # IDENTICAL to live/test
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: true
+    base_url: "https://testnet.binancefuture.com"
+    api_key: "dummy_key_for_demo"
+    api_secret: "dummy_secret_for_demo"
+    demo_trading: true         # Paper trading for test mode
+
+  live_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    api_key: "${BINANCE_LIVE_API_KEY}"
+    api_secret: "${BINANCE_LIVE_API_SECRET}"
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/market_neutral_trading.log"
+
+# Performance Attribution
+attribution:
+  track_sources: true
+  sector_attribution: true
+  correlation_attribution: true
+  market_neutral_metrics: true
+
+# Monitoring - Track alignment between modes
+monitoring:
+  track_performance: true
+  compare_to_backtest: true
+  alert_on_deviation: true
+  max_performance_deviation: 0.3    # Alert if performance deviates >30% from backtest
+  correlation_monitoring: true      # Monitor correlation drift
+  market_neutral_validation: true   # Validate market neutrality in real-time
