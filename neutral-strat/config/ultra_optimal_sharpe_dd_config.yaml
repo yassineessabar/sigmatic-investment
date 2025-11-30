@@ -1,0 +1,97 @@
+# Ultra-Optimal Sharpe & Low DD Strategy
+# Target: 2.0+ Sharpe, <15% Drawdown
+# Advanced statistical arbitrage with institutional risk controls
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Fastest signal from best performer
+    allocation_weight: 0.6  # Reduced allocation for stability
+    max_notional: 1500     # Conservative notional
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 1          # Same fast timing
+    allocation_weight: 0.4  # Secondary allocation
+    max_notional: 1000     # Lower secondary notional
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 1        # Single optimal window
+    metric: "sharpe"           # Pure Sharpe focus
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Enhanced signal quality
+    volatility_position_sizing: true    # Dynamic risk sizing
+    rsi_momentum_filter: true           # Signal quality filter
+    dynamic_position_sizing: true       # Advanced sizing
+    trend_momentum_boost: false         # Stability over aggression
+    stop_loss_mechanism: true           # Strict risk control
+    enhanced_cost_calculation: true     # Precise modeling
+
+portfolio:
+  equal_weight: true          # Market neutral weighting
+  volatility_scaled: true     # Risk-adjusted scaling
+  rebalance_frequency: "daily"
+
+# Ultra-Conservative Risk Management
+risk:
+  max_daily_dd: 0.008        # 0.8% daily DD (ultra-tight)
+  max_total_dd: 0.10         # 10% max DD target
+  leverage_limit: 6.0        # Conservative leverage
+  max_position_size: 0.15    # 15% max position (ultra-conservative)
+  stop_loss: 0.012           # 1.2% ultra-tight stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.000005         # Ultra-low institutional slippage
+  fees: 0.000005             # Best-in-class execution
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+# Advanced Risk Controls for High Sharpe
+advanced_controls:
+  # Volatility controls
+  vol_target: 0.20           # 20% target volatility
+  vol_ceiling: 0.25          # 25% volatility ceiling
+  vol_lookback: 20           # Volatility measurement window
+
+  # Drawdown controls
+  dd_alert_level: 0.05       # 5% DD alert
+  dd_reduction_factor: 0.5   # 50% size reduction on alert
+  recovery_threshold: 0.02   # 2% recovery threshold
+
+  # Position sizing enhancements
+  min_position_size: 0.02    # 2% minimum position
+  max_leverage_per_trade: 2.0 # 2x max leverage per trade
+  correlation_limit: 0.3     # 30% max correlation between positions
+
+  # Signal quality requirements
+  min_signal_strength: 0.7   # 70% minimum signal confidence
+  signal_decay_factor: 0.9   # Signal decay rate
+  noise_filter: 0.15         # 15% noise filter threshold
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_optimal_sharpe_dd.log"

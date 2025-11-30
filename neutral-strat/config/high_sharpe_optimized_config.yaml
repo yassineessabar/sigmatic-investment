@@ -1,0 +1,70 @@
+# High Sharpe Optimized Strategy Configuration
+# Balanced approach for >2.0 Sharpe target
+# Focus on signal quality and volatility management
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Optimal fast signal
+    allocation_weight: 0.7  # Balanced allocation
+    max_notional: 2000     # Workable notional
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 1        # Single optimal window
+    metric: "sharpe"           # Sharpe focus
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Signal quality
+    volatility_position_sizing: true    # Smart sizing
+    rsi_momentum_filter: true           # Quality filter
+    dynamic_position_sizing: true       # Optimal sizing
+    trend_momentum_boost: false         # Stability
+    stop_loss_mechanism: true           # Risk control
+    enhanced_cost_calculation: true     # Precise costs
+
+portfolio:
+  equal_weight: true          # Market neutral
+  volatility_scaled: true     # Risk scaling
+  rebalance_frequency: "daily"
+
+# Optimized Risk Management for Higher Sharpe
+risk:
+  max_daily_dd: 0.008        # 0.8% daily DD
+  max_total_dd: 0.14         # 14% max DD
+  leverage_limit: 6.0        # Moderate leverage
+  max_position_size: 0.18    # 18% max position
+  stop_loss: 0.01            # 1% stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.000005         # Ultra-low slippage
+  fees: 0.000005             # Premium execution
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/high_sharpe_optimized.log"

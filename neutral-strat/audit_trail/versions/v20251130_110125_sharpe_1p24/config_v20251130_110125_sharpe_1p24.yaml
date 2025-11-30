@@ -1,0 +1,70 @@
+# Balanced Breakthrough Sharpe Strategy
+# Institutional-grade optimization targeting 2.0+ Sharpe
+# Balanced risk-reward for consistent performance
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Optimal ultra-fast signal
+    allocation_weight: 1.8  # Strong concentration
+    max_notional: 6000     # High but manageable concentration
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 3        # Allow slight optimization flexibility
+    metric: "sharpe"           # Pure Sharpe focus
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Signal quality enhancement
+    volatility_position_sizing: true    # Dynamic volatility targeting
+    rsi_momentum_filter: true           # Quality signal filtering
+    dynamic_position_sizing: true       # Optimal position sizing
+    trend_momentum_boost: true          # Momentum amplification
+    stop_loss_mechanism: true           # Risk management
+    enhanced_cost_calculation: true     # Precise cost modeling
+
+portfolio:
+  equal_weight: false         # Concentrated single-pair approach
+  volatility_scaled: true     # Advanced volatility targeting
+  rebalance_frequency: "daily"
+
+# Aggressive but Sustainable Risk Profile
+risk:
+  max_daily_dd: 0.02         # 2% daily DD (aggressive but safe)
+  max_total_dd: 0.22         # 22% max DD (institutional acceptable)
+  leverage_limit: 15.0       # High leverage for returns
+  max_position_size: 0.50    # 50% maximum position
+  stop_loss: 0.03            # 3% stop loss (momentum friendly)
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-01-01"
+  end_date: "2024-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001           # Realistic low slippage
+  fees: 0.0001               # Realistic low fees
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/balanced_breakthrough_sharpe.log"

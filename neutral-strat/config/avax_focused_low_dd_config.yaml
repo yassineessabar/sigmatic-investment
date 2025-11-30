@@ -1,0 +1,122 @@
+# AVAX-Focused Low Drawdown Strategy
+# Focus on best-performing pair with enhanced risk controls
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 8              # Stable EMA window
+    allocation_weight: 1.0     # Full allocation to best pair
+    max_notional: 8000         # Concentrated but controlled
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 6      # Stable range based on results
+    window_range_end: 10       # Avoid too fast signals
+    metric: "calmar"           # Return/drawdown optimization
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true      # Critical for DD control
+    rsi_momentum_filter: true             # Enable RSI filter
+    dynamic_position_sizing: true         # Adaptive sizing
+    trend_momentum_boost: false           # Disable for stability
+    stop_loss_mechanism: true             # Enable protective stops
+    enhanced_cost_calculation: true
+
+    # Ultra-conservative drawdown control
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.02              # 2% daily limit
+      lookback_period: 15             # 15-day rolling DD monitoring
+      position_scale_factor: 0.5      # 50% reduction during DD
+      correlation_threshold: 0.7      # Not applicable for single pair
+
+    # Conservative volatility sizing
+    volatility_sizing:
+      target_volatility: 0.32          # Target 32% annual vol
+      lookback_period: 25             # 25-day vol estimation
+      min_allocation: 0.4             # Never go below 40%
+      max_allocation: 1.0             # Cap at 100%
+      vol_adjustment_speed: 0.3       # Moderate adjustments
+
+    # Single-pair risk filters
+    risk_filters:
+      momentum_strength_threshold: 0.3 # Moderate momentum threshold
+      volatility_regime_filter: true  # Avoid high vol regimes
+      trend_consistency_filter: true  # Consistent trend requirement
+
+portfolio:
+  equal_weight: true              # Only one pair
+  volatility_scaled: true         # Essential for DD control
+  rebalance_frequency: "daily"
+
+  # Single-pair controls
+  risk_controls:
+    momentum_decay: 0.95             # Slow signal decay
+    position_consistency: true      # Consistent position sizing
+
+  # Dynamic risk scaling for single pair
+  dynamic_scaling:
+    enabled: true
+    market_stress_detection: true   # Detect stress periods
+    volatility_threshold: 0.35     # Scale down if vol > 35%
+    momentum_weakness_detection: true # Detect weak momentum
+
+risk:
+  max_daily_dd: 0.015              # 1.5% daily drawdown limit
+  max_total_dd: 0.20               # 20% total drawdown target
+  leverage_limit: 6.0              # Conservative leverage
+  max_position_size: 0.8           # Allow larger positions for single pair
+  stop_loss: 0.035                 # 3.5% stop loss
+
+  # Conservative risk metrics
+  var_limit: 0.018                 # 1.8% daily VaR limit
+  stress_test_factor: 2.0          # 2x stress scenario
+  concentration_limit: 1.0         # 100% in one pair (by design)
+
+  # Enhanced single-pair risk management
+  single_pair_controls:
+    momentum_strength_monitoring: true
+    trend_reversal_detection: true
+    volatility_spike_protection: true
+    correlation_to_market_monitoring: true
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001               # Realistic slippage
+  fees: 0.0001                   # Realistic fees
+
+  # Conservative execution
+  market_impact: 0.00008         # Lower impact for single pair
+  execution_delay: 0.5           # Half-day execution delay
+  partial_fill_factor: 0.95     # 95% fill rate
+
+  # Single-pair execution optimization
+  execution_controls:
+    max_order_size: 0.3          # Moderate order sizes
+    volatility_adjusted_sizing: true
+    smart_timing: true           # Time orders optimally
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/avax_focused_low_dd_trading.log"

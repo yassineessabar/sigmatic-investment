@@ -1,0 +1,110 @@
+# Improved Signal Configuration
+# Balanced enhancement without over-optimization
+
+pairs:
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 13             # From previous best results
+    allocation_weight: 0.75    # Back to proven allocation
+    max_notional: 5000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 10     # Focus on proven range
+    window_range_end: 16
+    metric: "sharpe"
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true
+    rsi_momentum_filter: true
+    dynamic_position_sizing: true
+    trend_momentum_boost: true           # Keep what works
+    stop_loss_mechanism: true
+    enhanced_cost_calculation: true
+
+    # SIMPLIFIED SIGNAL IMPROVEMENTS
+    signal_improvements:
+      enabled: true
+
+      # Light multi-timeframe confirmation (not complex scoring)
+      timeframe_confirmation:
+        fast_multiplier: 0.8           # 13 * 0.8 = ~10 day
+        slow_multiplier: 2.0           # 13 * 2.0 = ~26 day
+        confirmation_threshold: 0.6    # 60% timeframe agreement
+
+      # Simple momentum strength filter
+      momentum_strength:
+        enabled: true
+        rsi_bounds: [30, 70]           # Avoid extreme RSI zones
+        momentum_threshold: 0.015      # 1.5% minimum momentum
+        trend_alignment_bonus: 0.15    # Small bonus for alignment
+
+      # Basic regime awareness (not complex scoring)
+      regime_awareness:
+        volatility_lookback: 20
+        vol_threshold_high: 0.8        # 80th percentile
+        vol_threshold_low: 0.2         # 20th percentile
+        high_vol_reduction: 0.8        # 20% reduction in high vol
+        low_vol_boost: 1.1             # 10% boost in low vol
+
+    # Keep proven volatility sizing
+    volatility_sizing:
+      target_volatility: 0.30           # Target 30% annual vol
+      lookback_period: 25
+      min_allocation: 0.4
+      max_allocation: 1.0
+      vol_adjustment_speed: 0.3
+
+    # Keep proven drawdown control
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.02                # 2% daily limit
+      lookback_period: 20
+      position_scale_factor: 0.6        # 40% reduction during DD
+      emergency_exit_threshold: 0.12    # Exit at 12% DD
+
+portfolio:
+  equal_weight: true
+  volatility_scaled: true
+  rebalance_frequency: "daily"
+
+  risk_controls:
+    momentum_decay: 0.92
+    position_consistency: true
+
+risk:
+  max_daily_dd: 0.015                  # 1.5% daily limit
+  max_total_dd: 0.20                   # 20% total drawdown
+  leverage_limit: 8.0
+  max_position_size: 0.35
+  stop_loss: 0.03
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001
+  fees: 0.0001
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/improved_signals_trading.log"

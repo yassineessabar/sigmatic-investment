@@ -1,0 +1,128 @@
+# Ultra Low Drawdown Strategy Configuration
+# Target: <15% maximum drawdown while maintaining strong returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 8              # Slower signals for stability
+    allocation_weight: 0.8     # Conservative leverage
+    max_notional: 3000         # Smaller positions
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 7              # Slightly faster than AVAX for diversity
+    allocation_weight: 0.7     # Even more conservative
+    max_notional: 3000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 5      # Avoid fast signals
+    window_range_end: 12       # Much more stable range
+    metric: "calmar"           # Return/drawdown optimization
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true      # Critical for DD control
+    rsi_momentum_filter: true             # Enable RSI filter
+    dynamic_position_sizing: true         # Adaptive sizing
+    trend_momentum_boost: false           # Disable for stability
+    stop_loss_mechanism: true             # Enable protective stops
+    enhanced_cost_calculation: true
+
+    # Ultra-conservative drawdown control
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.02              # 2% daily limit
+      lookback_period: 30             # 30-day rolling DD monitoring
+      position_scale_factor: 0.3      # Aggressive position reduction
+
+    # Conservative volatility-based sizing
+    volatility_sizing:
+      target_volatility: 0.30          # Target 30% annual vol
+      lookback_period: 45             # Longer vol estimation
+      min_allocation: 0.2             # Never go below 20%
+      max_allocation: 0.9             # Cap at 90%
+
+    # Risk overlay filters
+    risk_filters:
+      correlation_filter: true        # Avoid high correlation periods
+      volatility_filter: true         # Reduce during high vol
+      momentum_strength_filter: true  # Only trade strong signals
+
+portfolio:
+  equal_weight: false
+  volatility_scaled: true             # Essential for DD control
+  rebalance_frequency: "daily"
+
+  # Ultra-conservative portfolio controls
+  risk_controls:
+    max_correlation: 0.5              # Low correlation requirement
+    diversification_bonus: 0.2       # Strong diversification reward
+    momentum_decay: 0.90             # Faster signal decay
+    position_overlap_limit: 0.6      # Limit position overlap
+
+  # Dynamic risk scaling
+  dynamic_scaling:
+    enabled: true
+    volatility_threshold: 0.25        # Scale down if vol > 25%
+    correlation_threshold: 0.6        # Scale down if corr > 60%
+    momentum_threshold: 0.3           # Only trade strong momentum
+
+risk:
+  max_daily_dd: 0.025                # 2.5% daily drawdown limit
+  max_total_dd: 0.12                 # 12% total drawdown target
+  leverage_limit: 6.0                # Very conservative leverage
+  max_position_size: 0.25            # Small individual positions
+  stop_loss: 0.03                    # Tight 3% stop loss
+
+  # Ultra-conservative risk metrics
+  var_limit: 0.015                   # 1.5% daily VaR limit
+  stress_test_factor: 2.0            # 2x stress scenario
+  correlation_limit: 0.4             # Low correlation requirement
+  concentration_limit: 0.2           # Max 20% in any position
+
+  # Advanced risk overlays
+  regime_detection:
+    enabled: true
+    volatility_regime_threshold: 0.4  # High vol detection
+    correlation_regime_threshold: 0.7  # High corr detection
+    position_reduction_factor: 0.5    # 50% reduction in bad regimes
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.0001                   # Conservative slippage
+  fees: 0.0001                       # Conservative fees
+
+  # Ultra-conservative execution
+  market_impact: 0.00008             # Higher market impact assumption
+  execution_delay: 1.0               # Full day execution delay
+  partial_fill_factor: 0.8          # Assume 80% fill rate
+
+  # Risk-aware execution
+  execution_controls:
+    max_order_size: 0.15             # Small order sizes
+    time_weighted_execution: true    # Spread orders over time
+    volatility_adjusted_sizing: true # Size based on volatility
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_low_drawdown_trading.log"

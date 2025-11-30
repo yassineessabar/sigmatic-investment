@@ -1,0 +1,98 @@
+{
+  "version_id": "v20251130_110125_sharpe_1p24",
+  "timestamp": "20251130_110125",
+  "performance": {
+    "sharpe": 1.241164361883654,
+    "calmar": 1.3417465837244433,
+    "max_dd": -0.7053930382210574,
+    "ann_return": 0.9464586992161095,
+    "volatility": 0.7625571022517241,
+    "win_rate": 0.43358568479008947,
+    "final_perf": 14.172080297837413
+  },
+  "full_results": {
+    "results_table": "                     Pair EMA_Window  ...  Win Rate  Final_Perf\n0            BTCUSDT/AVAX          1  ...  0.433586    14.17208\n1  Equal-Weight Portfolio        N/A  ...  0.433586    14.17208\n2    Vol-Scaled Portfolio        N/A  ...  0.433586    14.17208\n\n[3 rows x 9 columns]",
+    "equal_portfolio_returns": "datetime\n2020-12-08    0.038908\n2020-12-09   -0.035482\n2020-12-10   -0.013344\n2020-12-11   -0.042917\n2020-12-12   -0.004436\n                ...   \n2024-11-25    0.000000\n2024-11-26    0.000000\n2024-11-27    0.000000\n2024-11-28    0.000000\n2024-11-29    0.000000\nLength: 1453, dtype: float64",
+    "vol_scaled_portfolio_returns": "datetime\n2020-12-08    0.038908\n2020-12-09   -0.035482\n2020-12-10   -0.013344\n2020-12-11   -0.042917\n2020-12-12   -0.004436\n                ...   \n2024-11-25    0.000000\n2024-11-26    0.000000\n2024-11-27    0.000000\n2024-11-28    0.000000\n2024-11-29    0.000000\nLength: 1453, dtype: float64",
+    "benchmark_returns": "datetime\n2020-12-08   -0.044519\n2020-12-09    0.011936\n2020-12-10   -0.015345\n2020-12-11   -0.012164\n2020-12-12    0.042622\n                ...   \n2024-11-25   -0.049983\n2024-11-26   -0.011203\n2024-11-27    0.042205\n2024-11-28   -0.002198\n2024-11-29    0.019039\nName: close, Length: 1453, dtype: float64",
+    "config": {
+      "pairs": [
+        {
+          "base": "BTCUSDT",
+          "alt": "AVAXUSDT",
+          "ema_window": 1,
+          "allocation_weight": 1.8,
+          "max_notional": 6000
+        }
+      ],
+      "strategy": {
+        "type": "relative_momentum_futures",
+        "optimization": {
+          "enabled": true,
+          "window_range_start": 1,
+          "window_range_end": 3,
+          "metric": "sharpe"
+        },
+        "enhancements": {
+          "enabled": true,
+          "multi_timeframe_confirmation": true,
+          "volatility_position_sizing": true,
+          "rsi_momentum_filter": true,
+          "dynamic_position_sizing": true,
+          "trend_momentum_boost": true,
+          "stop_loss_mechanism": true,
+          "enhanced_cost_calculation": true
+        }
+      },
+      "portfolio": {
+        "equal_weight": false,
+        "volatility_scaled": true,
+        "rebalance_frequency": "daily"
+      },
+      "risk": {
+        "max_daily_dd": 0.02,
+        "max_total_dd": 0.22,
+        "leverage_limit": 15.0,
+        "max_position_size": 0.5,
+        "stop_loss": 0.03
+      },
+      "futures": {
+        "enabled": true,
+        "include_funding": true,
+        "funding_frequency": 8
+      },
+      "backtest": {
+        "start_date": "2020-01-01",
+        "end_date": "2024-11-29",
+        "initial_capital": 10000,
+        "freq": 365
+      },
+      "execution": {
+        "slippage": 0.0001,
+        "fees": 0.0001,
+        "backtest_mode": {
+          "interval": "1d",
+          "mode": "backtest"
+        }
+      },
+      "binance": {
+        "testnet_mode": {
+          "testnet": false,
+          "base_url": "https://api.binance.com",
+          "demo_trading": true
+        }
+      },
+      "logging": {
+        "level": "INFO",
+        "console": true,
+        "file": "logs/balanced_breakthrough_sharpe.log"
+      }
+    },
+    "start_date": "2020-01-01",
+    "end_date": "2024-11-29"
+  },
+  "files": {
+    "strategy": "audit_trail/versions/v20251130_110125_sharpe_1p24/relative_momentum_sharpe_1p24.py",
+    "config": "audit_trail/versions/v20251130_110125_sharpe_1p24/config_v20251130_110125_sharpe_1p24.yaml"
+  }
+}

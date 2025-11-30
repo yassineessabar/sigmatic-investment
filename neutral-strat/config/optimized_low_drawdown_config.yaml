@@ -1,0 +1,132 @@
+# Optimized Low Drawdown Strategy Configuration
+# Target: <20% maximum drawdown while maximizing risk-adjusted returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 8              # Slower for stability
+    allocation_weight: 0.6     # Very conservative on volatile pair
+    max_notional: 3500         # Reduced exposure
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 5              # ADA shows better risk profile
+    allocation_weight: 1.2     # Focus more on stable performer
+    max_notional: 5000         # Higher allocation to better pair
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 4      # Avoid ultra-fast signals
+    window_range_end: 10       # Stable range
+    metric: "calmar"           # Return/drawdown optimization
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true      # Critical for DD control
+    rsi_momentum_filter: true             # Enable RSI filter
+    dynamic_position_sizing: true         # Adaptive sizing
+    trend_momentum_boost: false           # Disable for stability
+    stop_loss_mechanism: true             # Enable protective stops
+    enhanced_cost_calculation: true
+
+    # Advanced drawdown control
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.025             # 2.5% daily limit
+      lookback_period: 20             # 20-day rolling DD monitoring
+      position_scale_factor: 0.4      # Reduce positions during DD
+      correlation_threshold: 0.6      # Scale down if pairs too correlated
+
+    # Smart volatility-based sizing
+    volatility_sizing:
+      target_volatility: 0.35          # Target 35% annual vol
+      lookback_period: 30             # 30-day vol estimation
+      min_allocation: 0.3             # Never go below 30%
+      max_allocation: 1.0             # Cap at 100%
+      vol_adjustment_speed: 0.2       # Gradual adjustments
+
+    # Enhanced risk filters
+    risk_filters:
+      momentum_strength_threshold: 0.4 # Only strong momentum signals
+      volatility_regime_filter: true  # Avoid high vol regimes
+      correlation_regime_filter: true # Avoid high correlation periods
+
+portfolio:
+  equal_weight: false
+  volatility_scaled: true             # Essential for DD control
+  rebalance_frequency: "daily"
+
+  # Smart portfolio construction
+  risk_controls:
+    max_correlation: 0.55             # Tighter correlation control
+    diversification_bonus: 0.15      # Reward diversification
+    momentum_decay: 0.92             # Moderate signal decay
+    position_overlap_limit: 0.7      # Allow some overlap
+
+  # Dynamic risk scaling
+  dynamic_scaling:
+    enabled: true
+    market_stress_detection: true     # Detect stress periods
+    volatility_threshold: 0.3        # Scale down if vol > 30%
+    correlation_threshold: 0.65      # Scale down if corr > 65%
+
+risk:
+  max_daily_dd: 0.02                 # 2% daily drawdown limit
+  max_total_dd: 0.18                 # 18% total drawdown target
+  leverage_limit: 8.0                # Moderate leverage
+  max_position_size: 0.3             # Conservative position sizing
+  stop_loss: 0.04                    # 4% stop loss
+
+  # Enhanced risk metrics
+  var_limit: 0.02                    # 2% daily VaR limit
+  stress_test_factor: 1.8            # 1.8x stress scenario
+  correlation_limit: 0.5             # Low correlation requirement
+  concentration_limit: 0.25          # Max 25% in any position
+
+  # Regime-aware risk management
+  regime_detection:
+    enabled: true
+    volatility_lookback: 30           # 30-day vol regime
+    correlation_lookback: 20          # 20-day corr regime
+    crisis_detection: true            # Detect market crises
+    position_reduction_factor: 0.6    # 40% reduction in bad regimes
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00012                  # Realistic slippage
+  fees: 0.00012                      # Realistic fees
+
+  # Conservative execution
+  market_impact: 0.0001              # Account for market impact
+  execution_delay: 0.8               # Partial execution delay
+  partial_fill_factor: 0.9          # 90% fill rate
+
+  # Advanced execution controls
+  execution_controls:
+    max_order_size: 0.2              # Small order sizes
+    volatility_adjusted_sizing: true # Size based on volatility
+    time_weighted_execution: true    # Spread orders over time
+    smart_order_routing: true        # Route to best execution
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/optimized_low_drawdown_trading.log"

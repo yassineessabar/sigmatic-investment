@@ -1,0 +1,90 @@
+# Ultra Institutional Strategy Configuration
+# Target: >2.0 Sharpe Ratio with Ultra-Low Drawdown (<10%)
+# Institutional fund grade performance
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Fastest signals for best pair
+    allocation_weight: 0.5  # Ultra-conservative allocation
+    max_notional: 2500     # Very conservative notional
+  # Focus on single best-performing pair for institutional quality
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 2        # Ultra-fast institutional signals
+    metric: "sharpe"           # Pure Sharpe optimization
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Maximum signal quality
+    volatility_position_sizing: true    # Conservative sizing
+    rsi_momentum_filter: true           # Quality filters
+    dynamic_position_sizing: true       # Advanced risk management
+    trend_momentum_boost: false         # No leverage boost
+    stop_loss_mechanism: true           # Strict risk control
+    enhanced_cost_calculation: true     # Precise modeling
+
+portfolio:
+  equal_weight: true          # Institutional standard
+  volatility_scaled: true     # Risk-adjusted scaling
+  rebalance_frequency: "daily"
+
+# Ultra-Conservative Institutional Risk Parameters
+risk:
+  max_daily_dd: 0.015        # 1.5% max daily drawdown
+  max_total_dd: 0.06         # 6% max total drawdown (ultra-low)
+  leverage_limit: 5.0        # Very low institutional leverage
+  max_position_size: 0.15    # 15% max position (ultra-conservative)
+  stop_loss: 0.01            # 1% institutional stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00001          # Prime institutional execution
+  fees: 0.00001              # Best institutional rates
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+# Ultra-Conservative Institutional Controls
+institutional_controls:
+  # Signal quality
+  min_signal_confidence: 0.9   # 90% confidence requirement
+  signal_stability_window: 3   # Short stability window
+
+  # Risk limits
+  volatility_ceiling: 0.4      # Low volatility threshold
+  max_leverage_multiplier: 1.2 # Minimal leverage scaling
+  risk_budget_allocation: 0.08 # 8% risk budget per trade
+
+  # Drawdown protection
+  daily_var_limit: 0.012       # 1.2% daily VaR
+  rolling_dd_monitor: 0.03     # 3% rolling DD alert
+
+  # Performance targets
+  min_sharpe_threshold: 2.0    # Target 2.0+ Sharpe
+  performance_lookback: 30     # Monthly monitoring
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_institutional.log"

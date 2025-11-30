@@ -1,0 +1,75 @@
+# Target 2+ Sharpe Strategy Configuration
+# Optimized version of best performing strategy for institutional 2+ Sharpe
+# Based on proven v20251130_054559_sharpe_2p47 but enhanced for higher Sharpe
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Ultra-fast signals from best config
+    allocation_weight: 1.0  # Conservative allocation for high Sharpe
+    max_notional: 3000     # Moderate notional
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 2          # Slight diversification
+    allocation_weight: 0.8  # Lower secondary allocation
+    max_notional: 2500
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 2        # Very fast signals for high Sharpe
+    metric: "sharpe"           # Pure Sharpe optimization
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Keep proven enhancements
+    volatility_position_sizing: true    # Dynamic sizing
+    rsi_momentum_filter: true           # Signal quality
+    dynamic_position_sizing: true       # Risk-adjusted sizing
+    trend_momentum_boost: false         # Disable for stability
+    stop_loss_mechanism: true           # Risk control
+    enhanced_cost_calculation: true     # Precise modeling
+
+portfolio:
+  equal_weight: true          # Proven equal weighting
+  volatility_scaled: true     # Risk scaling
+  rebalance_frequency: "daily"
+
+# Enhanced Risk Management for 2+ Sharpe
+risk:
+  max_daily_dd: 0.015        # 1.5% daily DD for ultra-high Sharpe
+  max_total_dd: 0.06         # 6% max DD for institutional grade
+  leverage_limit: 12.0       # Moderate leverage
+  max_position_size: 0.30    # 30% max position
+  stop_loss: 0.02            # 2% tight stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00002          # Ultra-low institutional slippage
+  fees: 0.00002              # Best institutional fees
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/target_2plus_sharpe.log"

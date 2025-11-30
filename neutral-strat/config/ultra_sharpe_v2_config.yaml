@@ -1,0 +1,74 @@
+# Ultra Sharpe V2 Strategy Configuration
+# Focus on signal quality and optimal risk-adjusted returns
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 3          # Slightly slower for stability
+    allocation_weight: 1.2  # Moderate leverage for best performer
+    max_notional: 7000
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 4          # Slower for diversification
+    allocation_weight: 1.0  # Conservative weight
+    max_notional: 5000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 2
+    window_range_end: 8        # Balanced speed vs stability
+    metric: "sharpe"           # Focus on risk-adjusted returns
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Enhanced signal quality
+    volatility_position_sizing: true    # Dynamic volatility-based sizing
+    rsi_momentum_filter: true           # Better signal filtering
+    dynamic_position_sizing: true       # Advanced position sizing
+    trend_momentum_boost: false         # Disable for stability
+    stop_loss_mechanism: true           # Risk control
+    enhanced_cost_calculation: true     # Better cost modeling
+
+portfolio:
+  equal_weight: true          # Equal weighting for stability
+  volatility_scaled: true     # Volatility scaling
+  rebalance_frequency: "daily"
+
+# Conservative risk management for better Sharpe
+risk:
+  max_daily_dd: 0.06         # Very low daily risk
+  max_total_dd: 0.15         # Conservative max drawdown
+  leverage_limit: 20.0       # Moderate leverage
+  max_position_size: 0.5     # Conservative position sizes
+  stop_loss: 0.03            # Tight stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00005          # Low slippage
+  fees: 0.00005              # Low fees
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_sharpe_v2.log"

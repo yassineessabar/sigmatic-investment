@@ -1,0 +1,97 @@
+# Institutional Grade Strategy Configuration
+# Target: >2.0 Sharpe Ratio with Minimal Drawdown
+# Designed for professional fund deployment
+
+pairs:
+  - base: BTCUSDT
+    alt: AVAXUSDT
+    ema_window: 1          # Ultra-fast institutional signals
+    allocation_weight: 0.8  # Conservative institutional allocation
+    max_notional: 4000     # Conservative notional limits
+  - base: BTCUSDT
+    alt: ADAUSDT
+    ema_window: 2          # Slightly diversified timing
+    allocation_weight: 0.6  # Lower secondary allocation
+    max_notional: 3000
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 1
+    window_range_end: 3        # Fastest institutional signals
+    metric: "sharpe"           # Pure Sharpe optimization
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true  # Institutional signal quality
+    volatility_position_sizing: true    # Advanced institutional sizing
+    rsi_momentum_filter: true           # Quality filters
+    dynamic_position_sizing: true       # Institutional risk management
+    trend_momentum_boost: false         # Conservative, no boost
+    stop_loss_mechanism: true           # Institutional risk control
+    enhanced_cost_calculation: true     # Precise cost modeling
+
+portfolio:
+  equal_weight: true          # Institutional equal weighting
+  volatility_scaled: true     # Professional volatility scaling
+  rebalance_frequency: "daily"
+
+# Ultra-Conservative Institutional Risk Management
+risk:
+  max_daily_dd: 0.02         # 2% max daily drawdown (institutional)
+  max_total_dd: 0.08         # 8% max total drawdown (ultra-low)
+  leverage_limit: 8.0        # Conservative institutional leverage
+  max_position_size: 0.25    # 25% max position (conservative)
+  stop_loss: 0.015           # 1.5% tight institutional stops
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2022-11-29"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00002          # Institutional execution quality
+  fees: 0.00002              # Prime brokerage rates
+
+  backtest_mode:
+    interval: "1d"
+    mode: "backtest"
+
+# Institutional Signal Quality Parameters
+institutional_controls:
+  # Signal strength thresholds
+  min_signal_confidence: 0.85  # Very high confidence requirement
+  signal_stability_window: 5   # Signal stability requirement
+
+  # Market condition filters
+  volatility_ceiling: 0.6      # Max volatility threshold
+  correlation_floor: -0.3      # Min correlation requirement
+
+  # Position sizing controls
+  max_leverage_multiplier: 1.5 # Conservative leverage scaling
+  risk_budget_allocation: 0.15 # 15% risk budget per trade
+
+  # Drawdown controls
+  daily_var_limit: 0.018       # 1.8% daily VaR limit
+  rolling_dd_monitor: 0.05     # 5% rolling DD monitoring
+
+  # Performance monitoring
+  min_sharpe_threshold: 1.8    # Minimum acceptable Sharpe
+  performance_lookback: 60     # Performance monitoring window
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/institutional_strategy.log"

@@ -1,0 +1,150 @@
+# Ultra Conservative <15% Drawdown Strategy
+# Aggressive risk management with dynamic scaling and regime detection
+
+pairs:
+  - base: BTCUSDT
+    alt: ADAUSDT  # Focus on historically more stable pair
+    ema_window: 10             # Very slow signals
+    allocation_weight: 0.4     # Very conservative allocation
+    max_notional: 2000         # Small positions
+
+strategy:
+  type: "relative_momentum_futures"
+  optimization:
+    enabled: true
+    window_range_start: 8      # Very slow signals only
+    window_range_end: 15       # Ultra-stable range
+    metric: "calmar"           # Return/drawdown optimization
+
+  enhancements:
+    enabled: true
+    multi_timeframe_confirmation: true
+    volatility_position_sizing: true      # Critical for DD control
+    rsi_momentum_filter: true             # Strong RSI filtering
+    dynamic_position_sizing: true         # Adaptive sizing
+    trend_momentum_boost: false           # Disabled
+    stop_loss_mechanism: true             # Tight stops
+    enhanced_cost_calculation: true
+
+    # Ultra-aggressive drawdown control
+    drawdown_control:
+      enabled: true
+      max_daily_dd: 0.01              # 1% daily limit
+      lookback_period: 10             # Short lookback
+      position_scale_factor: 0.2      # Massive reduction during DD
+      emergency_exit_threshold: 0.08  # Exit all positions at 8% DD
+
+    # Ultra-conservative volatility sizing
+    volatility_sizing:
+      target_volatility: 0.18          # Target 18% annual vol
+      lookback_period: 20             # Short vol estimation
+      min_allocation: 0.1             # Go to 10% minimum
+      max_allocation: 0.5             # Cap at 50%
+      vol_adjustment_speed: 0.5       # Fast adjustments
+
+    # Advanced risk filters
+    risk_filters:
+      momentum_strength_threshold: 0.6 # Only very strong signals
+      volatility_regime_filter: true  # Strict vol filter
+      correlation_regime_filter: true # Strict correlation filter
+      market_stress_filter: true      # Exit during market stress
+      trend_quality_filter: true      # Only high-quality trends
+
+    # Regime detection system
+    regime_detection:
+      enabled: true
+      volatility_lookback: 15          # Short-term regime detection
+      correlation_lookback: 10         # Quick correlation monitoring
+      stress_indicator_threshold: 0.3  # Low stress threshold
+      position_reduction_in_bad_regime: 0.1  # 90% reduction
+
+portfolio:
+  equal_weight: true              # Single pair
+  volatility_scaled: true         # Essential
+  rebalance_frequency: "daily"
+
+  # Ultra-conservative portfolio controls
+  risk_controls:
+    momentum_decay: 0.85             # Fast signal decay
+    position_consistency: false     # Allow rapid changes
+
+    # Dynamic risk overlays
+    market_regime_overlay: true      # Overlay regime detection
+    volatility_spike_protection: true # Protect against vol spikes
+    correlation_spike_protection: true # Protect against correlation spikes
+
+  # Emergency risk management
+  emergency_controls:
+    enabled: true
+    total_portfolio_dd_limit: 0.12   # 12% portfolio DD limit
+    rapid_dd_protection: true        # Protect against rapid drawdowns
+    position_pause_threshold: 0.10   # Pause trading at 10% DD
+
+risk:
+  max_daily_dd: 0.008              # 0.8% daily drawdown limit
+  max_total_dd: 0.12               # 12% total drawdown target
+  leverage_limit: 3.0              # Very low leverage
+  max_position_size: 0.15          # Tiny positions
+  stop_loss: 0.02                  # 2% stop loss
+
+  # Ultra-conservative risk metrics
+  var_limit: 0.01                  # 1% daily VaR limit
+  stress_test_factor: 3.0          # 3x stress scenario
+  concentration_limit: 1.0         # Single pair by design
+
+  # Multi-layer risk management
+  risk_layers:
+    layer_1_daily_limit: 0.005     # 0.5% daily loss limit
+    layer_2_weekly_limit: 0.02     # 2% weekly loss limit
+    layer_3_monthly_limit: 0.05    # 5% monthly loss limit
+    layer_4_total_limit: 0.12      # 12% total loss limit
+
+  # Advanced protective measures
+  protective_measures:
+    correlation_monitoring: true     # Monitor correlation to BTC
+    volatility_spike_detection: true # Detect vol spikes
+    momentum_weakness_detection: true # Detect momentum breakdown
+    liquidity_monitoring: true      # Monitor liquidity conditions
+
+futures:
+  enabled: true
+  include_funding: true
+  funding_frequency: 8
+
+backtest:
+  start_date: "2020-11-01"
+  end_date: "2025-11-29"
+  initial_capital: 10000
+  freq: 365
+
+execution:
+  slippage: 0.00015              # Higher slippage assumption
+  fees: 0.00015                  # Higher fees assumption
+
+  # Ultra-conservative execution
+  market_impact: 0.0002          # High market impact assumption
+  execution_delay: 1.0           # Full day execution delay
+  partial_fill_factor: 0.8      # Conservative fill assumption
+
+  # Risk-first execution
+  execution_controls:
+    max_order_size: 0.05         # Tiny order sizes
+    volatility_adjusted_sizing: true
+    smart_timing: true
+    risk_first_routing: true     # Route for lowest risk
+
+    # Emergency execution controls
+    emergency_exit_capability: true  # Rapid exit capability
+    position_scaling_speed: 0.8     # Fast position changes
+    liquidity_preservation: true    # Preserve liquidity
+
+binance:
+  testnet_mode:
+    testnet: false
+    base_url: "https://api.binance.com"
+    demo_trading: true
+
+logging:
+  level: "INFO"
+  console: true
+  file: "logs/ultra_conservative_15dd_trading.log"
