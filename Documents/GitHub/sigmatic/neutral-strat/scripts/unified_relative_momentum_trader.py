@@ -70,6 +70,9 @@ class UnifiedRelativeMomentumTrader:
         # Initialize exchange if needed
         if self.mode != TradingMode.BACKTEST and not self.config.get('execution', {}).get('simulation_only', False):
             self._initialize_exchange()
+        else:
+            # Set exchange to None for simulation/backtest modes
+            self.exchange = None
 
         # Extract IDENTICAL strategy parameters for all modes
         self._extract_strategy_parameters()
@@ -276,6 +279,11 @@ class UnifiedRelativeMomentumTrader:
 
     def _fetch_current_data(self, symbol: str, lookback_days: int) -> pd.DataFrame:
         """Fetch current data for test/live modes"""
+        # For simulation mode, return empty DataFrame
+        if self.exchange is None:
+            logger.warning(f"Simulation mode: No data available for {symbol}")
+            return pd.DataFrame()
+
         try:
             trading_symbol = self.convert_to_trading_symbol(symbol)
 
@@ -325,6 +333,11 @@ class UnifiedRelativeMomentumTrader:
 
     def _fetch_current_funding(self, symbol: str, days_back: int) -> pd.DataFrame:
         """Fetch current funding data for test/live modes"""
+        # For simulation mode, return empty DataFrame
+        if self.exchange is None:
+            logger.warning(f"Simulation mode: No funding data available for {symbol}")
+            return pd.DataFrame()
+
         try:
             trading_symbol = self.convert_to_trading_symbol(symbol)
             since_ts = self.exchange.milliseconds() - (days_back * 24 * 60 * 60 * 1000)
@@ -488,8 +501,9 @@ class UnifiedRelativeMomentumTrader:
 
     def get_account_balance(self) -> Dict:
         """Get account balance for live/test modes"""
-        if self.mode == TradingMode.BACKTEST:
-            return {'total': 0, 'free': self.config['backtest']['initial_capital']}
+        if self.mode == TradingMode.BACKTEST or self.exchange is None:
+            initial_capital = self.config.get('initial_capital', 10000)
+            return {'total': initial_capital, 'free': initial_capital, 'used': 0.0}
 
         try:
             balance = self.exchange.fetch_balance()
@@ -520,6 +534,14 @@ class UnifiedRelativeMomentumTrader:
 
     def _execute_live_signal(self, signal: Dict) -> bool:
         """Execute signal on live/test exchange"""
+        # For simulation mode, log and return success without executing
+        if self.exchange is None:
+            symbol = signal['symbol']
+            side = signal['side']
+            signal_type = signal.get('type', 'unknown')
+            logger.info(f"🧪 SIMULATION: Would execute {signal_type} {side} {symbol}")
+            return True
+
         try:
             symbol = signal['symbol']
             side = signal['side']
