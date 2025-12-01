@@ -409,6 +409,10 @@ class UnifiedRelativeMomentumTrader:
         """Generate signals using EXACT same logic across all modes"""
         signals = []
 
+        # Demo signal generation for testing
+        if self.config.get('execution', {}).get('force_demo_signals', False) and len(self.paper_positions) == 0:
+            return self._generate_demo_signal()
+
         try:
             for pair_config in self.pairs:
                 base_symbol = pair_config['base']
@@ -485,6 +489,36 @@ class UnifiedRelativeMomentumTrader:
             logger.error(f"Error in signal generation: {e}")
 
         return signals
+
+    def _generate_demo_signal(self) -> List[Dict]:
+        """Generate a demo signal for testing position taking"""
+        if not self.exchange:
+            return []
+
+        try:
+            # Generate a demo signal for BTCUSDT
+            symbol = 'BTCUSDT'
+            trading_symbol = self.convert_to_trading_symbol(symbol)
+            ticker = self.exchange.fetch_ticker(trading_symbol)
+            current_price = ticker['last']
+
+            # Create a demo buy signal
+            demo_signal = {
+                'symbol': symbol,
+                'side': 'long',
+                'type': 'entry',
+                'allocation_weight': 0.5,
+                'max_notional': 1000,
+                'timestamp': datetime.now(),
+                'reason': 'Demo signal for testing'
+            }
+
+            logger.info(f"🎯 DEMO: Generated test signal for {symbol} @ ${current_price:.2f}")
+            return [demo_signal]
+
+        except Exception as e:
+            logger.error(f"Error generating demo signal: {e}")
+            return []
 
     def calculate_position_size(self, signal: Dict, current_price: float) -> float:
         """Calculate position size - IDENTICAL logic with mode-specific multipliers"""
