@@ -12,28 +12,28 @@ pairs:
     alt: AVAXUSDT
     ema_window: 10
     allocation_weight: 0.5     # Reduced weight for neutrality
-    max_notional: 5000         # Realistic demo size ($5k per pair)
+    max_notional: 1000         # Appropriate for $10k account ($1k per pair)
     pair_type: "long_short"    # Force market neutral positioning
 
   - base: BTCUSDT
     alt: ETHUSDT
     ema_window: 12
     allocation_weight: 0.5
-    max_notional: 5000
+    max_notional: 1000
     pair_type: "long_short"
 
   - base: BTCUSDT
     alt: SOLUSDT
     ema_window: 8
     allocation_weight: 0.5
-    max_notional: 5000
+    max_notional: 1000
     pair_type: "long_short"
 
   - base: BTCUSDT
     alt: ADAUSDT
     ema_window: 15
     allocation_weight: 0.5
-    max_notional: 5000
+    max_notional: 1000
     pair_type: "long_short"
 
   # Additional Cross-Asset Pairs for Diversification
@@ -41,14 +41,14 @@ pairs:
     alt: AVAXUSDT
     ema_window: 14
     allocation_weight: 0.3
-    max_notional: 3000         # $3k for secondary pairs
+    max_notional: 500          # $500 for secondary pairs
     pair_type: "long_short"
 
   - base: SOLUSDT
     alt: ADAUSDT
     ema_window: 16
     allocation_weight: 0.3
-    max_notional: 3000
+    max_notional: 500
     pair_type: "long_short"
 
 strategy:
@@ -136,8 +136,8 @@ futures:
   include_funding: true
   funding_frequency: 8
 
-# Capital - Demo mode uses larger balance for realistic futures trading
-initial_capital: 100000              # Demo account balance ($100,000)
+# Capital - Real demo account balance
+initial_capital: 10868.98            # Your actual demo account balance
 
 backtest:
   start_date: "2020-01-01"
@@ -162,7 +162,7 @@ execution:
     use_public_data: true            # Use public market data
     demo_balance: 100000             # Realistic demo account balance ($100k)
     simulation_only: true            # Enhanced simulation mode
-    force_demo_signals: false        # Set to true to generate demo signals for testing
+    force_demo_signals: true         # Generate demo signals for testing
 
   live_mode:
     interval: "1d"                   # IDENTICAL frequency to backtest
