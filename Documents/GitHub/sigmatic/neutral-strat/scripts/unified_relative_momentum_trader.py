@@ -68,7 +68,7 @@ class UnifiedRelativeMomentumTrader:
         self._show_mode_info()
 
         # Initialize exchange if needed
-        if self.mode != TradingMode.BACKTEST:
+        if self.mode != TradingMode.BACKTEST and not self.config.get('execution', {}).get('simulation_only', False):
             self._initialize_exchange()
 
         # Extract IDENTICAL strategy parameters for all modes
@@ -148,13 +148,14 @@ class UnifiedRelativeMomentumTrader:
         """Initialize exchange for test or live modes"""
         # Get mode-specific credentials
         if self.mode == TradingMode.TEST:
-            api_key = os.getenv('BINANCE_TESTNET_API_KEY')
-            api_secret = os.getenv('BINANCE_TESTNET_API_SECRET')
             binance_config = self.config['binance']['testnet_mode']
+            # Try config first, then environment
+            api_key = binance_config.get('api_key') or os.getenv('BINANCE_TESTNET_API_KEY')
+            api_secret = binance_config.get('api_secret') or os.getenv('BINANCE_TESTNET_API_SECRET')
         else:  # LIVE mode
-            api_key = os.getenv('BINANCE_LIVE_API_KEY')
-            api_secret = os.getenv('BINANCE_LIVE_API_SECRET')
             binance_config = self.config['binance']['live_mode']
+            api_key = binance_config.get('api_key') or os.getenv('BINANCE_LIVE_API_KEY')
+            api_secret = binance_config.get('api_secret') or os.getenv('BINANCE_LIVE_API_SECRET')
 
         if not api_key or not api_secret:
             mode_name = "TESTNET" if self.mode == TradingMode.TEST else "LIVE"
