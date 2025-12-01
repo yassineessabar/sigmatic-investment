@@ -153,12 +153,13 @@ execution:
   # Mode-specific execution settings - PERFECTLY ALIGNED
   test_mode:
     interval: "1d"                   # IDENTICAL frequency to backtest
-    mode: "paper"
+    mode: "simulation"               # Pure simulation mode
     check_frequency_minutes: 1440    # Daily checks (24*60 minutes) - IDENTICAL
     position_size_multiplier: 1.0    # IDENTICAL size to backtest
     use_spot_trading: false          # Use futures like backtest
     simulate_execution: true         # Paper trading mode
     offline_mode: true               # No API calls required
+    simulation_only: true            # Skip API initialization
 
   live_mode:
     interval: "1d"                   # IDENTICAL frequency to backtest
@@ -181,8 +182,8 @@ binance:
   testnet_mode:
     testnet: true
     base_url: "https://testnet.binancefuture.com"
-    api_key: "dummy_key_for_demo"
-    api_secret: "dummy_secret_for_demo"
+    api_key: "cXur5uynoGfICg5mviK7zJRpn2C4xIAgV9Ou7gY2075fc3XMMgRtPnOACU9VOJdu"
+    api_secret: "n3gu6IZrHP1WJRnYppKUqnTUjVnN8lXxmkLd8tM4eNazRIxdzv5v2R42dqSmxFP2"
     demo_trading: true         # Paper trading for test mode
 
   live_mode:
