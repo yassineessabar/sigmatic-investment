@@ -244,10 +244,16 @@ class UnifiedRelativeMomentumTrader:
 
         # Performance tracking
         self.start_time = datetime.now()
-        self.start_balance = 0.0
+        self.start_balance = self.config.get('initial_capital', 10000)
+        self.current_balance = self.start_balance
         self.total_trades = 0
         self.successful_trades = 0
         self.daily_pnl = 0.0
+        self.total_pnl = 0.0
+
+        # Enhanced position tracking for paper trading
+        self.paper_positions = {}  # Track simulated positions with P&L
+        self.unrealized_pnl = 0.0  # Track unrealized P&L
 
         # Signal handlers for non-backtest modes
         if self.mode != TradingMode.BACKTEST:
@@ -518,8 +524,13 @@ class UnifiedRelativeMomentumTrader:
     def get_account_balance(self) -> Dict:
         """Get account balance for live/test modes"""
         if self.mode == TradingMode.BACKTEST or self.exchange is None:
-            initial_capital = self.config.get('initial_capital', 10000)
-            return {'total': initial_capital, 'free': initial_capital, 'used': 0.0}
+            # For paper trading, return dynamic balance with P&L
+            if hasattr(self, 'current_balance') and hasattr(self, 'unrealized_pnl'):
+                total_balance = self.current_balance + getattr(self, 'unrealized_pnl', 0.0)
+                return {'total': total_balance, 'free': total_balance, 'used': 0.0}
+            else:
+                initial_capital = self.config.get('initial_capital', 10000)
+                return {'total': initial_capital, 'free': initial_capital, 'used': 0.0}
 
         try:
             balance = self.exchange.fetch_balance()
@@ -556,27 +567,97 @@ class UnifiedRelativeMomentumTrader:
         return True
 
     def _simulate_paper_trading(self, signal: Dict) -> bool:
-        """Simulate paper trading with real market data"""
+        """Enhanced paper trading with position tracking and P&L calculation"""
         try:
             symbol = signal['symbol']
             side = signal['side']
             signal_type = signal.get('type', 'unknown')
 
-            # Get real market price if exchange is available
-            if self.exchange:
-                trading_symbol = self.convert_to_trading_symbol(symbol)
-                ticker = self.exchange.fetch_ticker(trading_symbol)
-                current_price = ticker['last']
-                logger.info(f"📄 PAPER TRADING: {signal_type} {side} {symbol} @ ${current_price:.2f}")
-            else:
-                logger.info(f"📄 PAPER TRADING: {signal_type} {side} {symbol}")
+            # Get real market price
+            if not self.exchange:
+                logger.info(f"📄 PAPER TRADING: {signal_type} {side} {symbol} (no price data)")
+                return True
+
+            trading_symbol = self.convert_to_trading_symbol(symbol)
+            ticker = self.exchange.fetch_ticker(trading_symbol)
+            current_price = ticker['last']
+
+            if signal_type == 'entry':
+                # Calculate position size
+                size = self.calculate_position_size(signal, current_price)
+                if size <= 0:
+                    return False
+
+                # Record new position
+                self.paper_positions[symbol] = {
+                    'side': side,
+                    'size': size,
+                    'entry_price': current_price,
+                    'entry_time': datetime.now(),
+                    'unrealized_pnl': 0.0
+                }
+
+                self.total_trades += 1
+                self.successful_trades += 1
+
+                logger.info(f"📄 PAPER ENTRY: {side} {size:.6f} {symbol} @ ${current_price:.2f}")
+
+            elif signal_type == 'exit' and symbol in self.paper_positions:
+                # Close position and calculate P&L
+                position = self.paper_positions[symbol]
+                entry_price = position['entry_price']
+                size = position['size']
+
+                if position['side'] == 'long':
+                    pnl = (current_price - entry_price) * size
+                else:  # short
+                    pnl = (entry_price - current_price) * size
+
+                # Update balances
+                self.total_pnl += pnl
+                self.current_balance += pnl
+
+                logger.info(f"📄 PAPER EXIT: {position['side']} {symbol} @ ${current_price:.2f} | P&L: ${pnl:.2f}")
+
+                # Remove position
+                del self.paper_positions[symbol]
+
+            # Update unrealized P&L for open positions
+            self._update_unrealized_pnl()
 
             return True
 
         except Exception as e:
             logger.error(f"Error in paper trading simulation: {e}")
-            logger.info(f"📄 PAPER TRADING: {signal.get('type', 'unknown')} {signal.get('side', 'unknown')} {symbol}")
             return True
+
+    def _update_unrealized_pnl(self):
+        """Update unrealized P&L for open positions"""
+        if not self.exchange or not self.paper_positions:
+            return
+
+        total_unrealized = 0.0
+        for symbol, position in self.paper_positions.items():
+            try:
+                trading_symbol = self.convert_to_trading_symbol(symbol)
+                ticker = self.exchange.fetch_ticker(trading_symbol)
+                current_price = ticker['last']
+
+                entry_price = position['entry_price']
+                size = position['size']
+
+                if position['side'] == 'long':
+                    unrealized_pnl = (current_price - entry_price) * size
+                else:  # short
+                    unrealized_pnl = (entry_price - current_price) * size
+
+                position['unrealized_pnl'] = unrealized_pnl
+                total_unrealized += unrealized_pnl
+
+            except Exception as e:
+                logger.error(f"Error updating unrealized P&L for {symbol}: {e}")
+
+        self.unrealized_pnl = total_unrealized
 
     def _execute_live_signal(self, signal: Dict) -> bool:
         """Execute signal on live/test exchange"""
@@ -739,8 +820,23 @@ class UnifiedRelativeMomentumTrader:
         logger.info(f"🔄 Trades: {self.total_trades}")
         logger.info(f"✅ Success Rate: {(self.successful_trades/max(1,self.total_trades)*100):.1f}%")
 
+        # Show paper trading specific info
+        if hasattr(self, 'paper_positions') and self.paper_positions:
+            logger.info(f"📍 Paper Positions: {len(self.paper_positions)}")
+            for symbol, pos in self.paper_positions.items():
+                unrealized = pos.get('unrealized_pnl', 0.0)
+                logger.info(f"  {symbol}: {pos['side']} {pos['size']:.6f} @ ${pos['entry_price']:.2f} (P&L: ${unrealized:.2f})")
+
+        # Show P&L summary for paper trading
+        if hasattr(self, 'total_pnl'):
+            logger.info(f"💹 Realized P&L: ${self.total_pnl:.2f}")
+            if hasattr(self, 'unrealized_pnl'):
+                logger.info(f"📊 Unrealized P&L: ${self.unrealized_pnl:.2f}")
+                logger.info(f"🎯 Total P&L: ${self.total_pnl + self.unrealized_pnl:.2f}")
+
+        # Legacy positions for live trading
         if self.positions:
-            logger.info(f"📍 Open Positions: {len(self.positions)}")
+            logger.info(f"📍 Live Positions: {len(self.positions)}")
             for symbol, pos in self.positions.items():
                 logger.info(f"  {symbol}: {pos['side']} {pos['size']:.6f}")
 
