@@ -12,28 +12,28 @@ pairs:
     alt: AVAXUSDT
     ema_window: 10
     allocation_weight: 0.5     # Reduced weight for neutrality
-    max_notional: 500          # Smaller notional per pair
+    max_notional: 5000         # Realistic demo size ($5k per pair)
     pair_type: "long_short"    # Force market neutral positioning
 
   - base: BTCUSDT
     alt: ETHUSDT
     ema_window: 12
     allocation_weight: 0.5
-    max_notional: 500
+    max_notional: 5000
     pair_type: "long_short"
 
   - base: BTCUSDT
     alt: SOLUSDT
     ema_window: 8
     allocation_weight: 0.5
-    max_notional: 500
+    max_notional: 5000
     pair_type: "long_short"
 
   - base: BTCUSDT
     alt: ADAUSDT
     ema_window: 15
     allocation_weight: 0.5
-    max_notional: 500
+    max_notional: 5000
     pair_type: "long_short"
 
   # Additional Cross-Asset Pairs for Diversification
@@ -41,14 +41,14 @@ pairs:
     alt: AVAXUSDT
     ema_window: 14
     allocation_weight: 0.3
-    max_notional: 300
+    max_notional: 3000         # $3k for secondary pairs
     pair_type: "long_short"
 
   - base: SOLUSDT
     alt: ADAUSDT
     ema_window: 16
     allocation_weight: 0.3
-    max_notional: 300
+    max_notional: 3000
     pair_type: "long_short"
 
 strategy:
@@ -136,8 +136,8 @@ futures:
   include_funding: true
   funding_frequency: 8
 
-# Capital - IDENTICAL across all modes
-initial_capital: 10000               # IDENTICAL to backtest ($10,000)
+# Capital - Demo mode uses larger balance for realistic futures trading
+initial_capital: 100000              # Demo account balance ($100,000)
 
 backtest:
   start_date: "2020-01-01"
@@ -153,14 +153,16 @@ execution:
   # Mode-specific execution settings - PERFECTLY ALIGNED
   test_mode:
     interval: "1d"                   # IDENTICAL frequency to backtest
-    mode: "enhanced_paper_trading"   # Enhanced paper trading with position tracking
-    check_frequency_minutes: 1440    # Daily checks (24*60 minutes) - IDENTICAL
+    mode: "realistic_demo_simulation" # Realistic demo simulation
+    check_frequency_minutes: 60      # Hourly checks for demo trading
     position_size_multiplier: 1.0    # IDENTICAL size to backtest
     use_spot_trading: false          # Use futures like backtest
-    simulate_execution: true         # Simulate with real prices
+    simulate_execution: true         # Enhanced simulation with real prices
     track_positions: true            # Track simulated positions
     use_public_data: true            # Use public market data
+    demo_balance: 100000             # Realistic demo account balance ($100k)
     simulation_only: true            # Enhanced simulation mode
+    force_demo_signals: false        # Set to true to generate demo signals for testing
 
   live_mode:
     interval: "1d"                   # IDENTICAL frequency to backtest
@@ -181,12 +183,12 @@ execution:
 
 binance:
   testnet_mode:
-    testnet: true
-    demo: false
-    base_url: "https://testnet.binance.vision"
-    api_key: "cXur5uynoGfICg5mviK7zJRpn2C4xIAgV9Ou7gY2075fc3XMMgRtPnOACU9VOJdu"
-    api_secret: "n3gu6IZrHP1WJRnYppKUqnTUjVnN8lXxmkLd8tM4eNazRIxdzv5v2R42dqSmxFP2"
-    demo_trading: true         # Paper trading for test mode
+    testnet: false
+    demo: true
+    base_url: "https://api.binance.com"
+    api_key: "mGmsRCQEiDIr6e0Nk8hFlbKeykSCfGRF2Uv9l1U33rZdvtbKIUz7eVVwDCPcYVTT"
+    api_secret: "L0VLCBjYajuatQvPjjleNnmZi5d7WUSSGZsObxw4TskEP5gmbxSJgA6R8n6rDTa9"
+    demo_trading: true         # Demo trading with real account
 
   live_mode:
     testnet: false
