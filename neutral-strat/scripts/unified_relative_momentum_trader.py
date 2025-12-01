@@ -70,8 +70,11 @@ class UnifiedRelativeMomentumTrader:
         # Initialize exchange if needed
         if self.mode != TradingMode.BACKTEST and not self.config.get('execution', {}).get('simulation_only', False):
             self._initialize_exchange()
+        elif self.config.get('execution', {}).get('use_public_data', False):
+            # Initialize exchange for public data access only
+            self._initialize_public_exchange()
         else:
-            # Set exchange to None for simulation/backtest modes
+            # Set exchange to None for pure simulation/backtest modes
             self.exchange = None
 
         # Extract IDENTICAL strategy parameters for all modes
@@ -175,10 +178,11 @@ class UnifiedRelativeMomentumTrader:
             }
         }
 
-        # Demo trading uses regular API with special credentials
-        # No need to change endpoints - demo keys work on regular API
-        if not binance_config.get('demo_trading'):
-            exchange_config['sandbox'] = binance_config.get('testnet', False)
+        # Demo trading configuration
+        if binance_config.get('demo_trading'):
+            exchange_config['demo'] = True
+        elif binance_config.get('testnet', False):
+            exchange_config['sandbox'] = True
 
         self.exchange = ccxt.binance(exchange_config)
 
@@ -188,6 +192,18 @@ class UnifiedRelativeMomentumTrader:
             logger.info("Exchange initialized: Testnet")
         else:
             logger.info("Exchange initialized: Live")
+
+    def _initialize_public_exchange(self):
+        """Initialize exchange for public data access only (no API keys required)"""
+        exchange_config = {
+            'enableRateLimit': True,
+            'options': {
+                'defaultType': 'future'  # Always use futures
+            }
+        }
+
+        self.exchange = ccxt.binance(exchange_config)
+        logger.info("Exchange initialized: Public Data Only (Futures)")
 
     def _extract_strategy_parameters(self):
         """Extract IDENTICAL strategy parameters for all modes"""
@@ -516,6 +532,11 @@ class UnifiedRelativeMomentumTrader:
             }
 
         except Exception as e:
+            # For public data mode, just return simulation balance
+            if "apiKey" in str(e):
+                initial_capital = self.config.get('initial_capital', 10000)
+                return {'total': initial_capital, 'free': initial_capital, 'used': 0.0}
+
             logger.error(f"Error getting account balance: {e}")
             return {'total': 0.0, 'free': 0.0, 'used': 0.0}
 
@@ -523,6 +544,8 @@ class UnifiedRelativeMomentumTrader:
         """Execute signal with mode-appropriate method"""
         if self.mode == TradingMode.BACKTEST:
             return self._simulate_signal_execution(signal)
+        elif self.config.get('execution', {}).get('simulate_execution', False):
+            return self._simulate_paper_trading(signal)
         else:
             return self._execute_live_signal(signal)
 
@@ -531,6 +554,29 @@ class UnifiedRelativeMomentumTrader:
         # This would integrate with your existing backtest execution logic
         logger.info(f"📊 BACKTEST: Simulated execution of {signal.get('symbol', 'Unknown')}")
         return True
+
+    def _simulate_paper_trading(self, signal: Dict) -> bool:
+        """Simulate paper trading with real market data"""
+        try:
+            symbol = signal['symbol']
+            side = signal['side']
+            signal_type = signal.get('type', 'unknown')
+
+            # Get real market price if exchange is available
+            if self.exchange:
+                trading_symbol = self.convert_to_trading_symbol(symbol)
+                ticker = self.exchange.fetch_ticker(trading_symbol)
+                current_price = ticker['last']
+                logger.info(f"📄 PAPER TRADING: {signal_type} {side} {symbol} @ ${current_price:.2f}")
+            else:
+                logger.info(f"📄 PAPER TRADING: {signal_type} {side} {symbol}")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Error in paper trading simulation: {e}")
+            logger.info(f"📄 PAPER TRADING: {signal.get('type', 'unknown')} {signal.get('side', 'unknown')} {symbol}")
+            return True
 
     def _execute_live_signal(self, signal: Dict) -> bool:
         """Execute signal on live/test exchange"""
