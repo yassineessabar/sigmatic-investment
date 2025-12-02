@@ -12,28 +12,28 @@ pairs:
     alt: AVAXUSDT
     ema_window: 10
     allocation_weight: 0.5     # Reduced weight for neutrality
-    max_notional: 1000         # Appropriate for $10k account ($1k per pair)
+    max_notional: 500          # Appropriate for $5k account ($500 per pair)
     pair_type: "long_short"    # Force market neutral positioning
 
   - base: BTCUSDT
     alt: ETHUSDT
     ema_window: 12
     allocation_weight: 0.5
-    max_notional: 1000
+    max_notional: 500
     pair_type: "long_short"
 
   - base: BTCUSDT
     alt: SOLUSDT
     ema_window: 8
     allocation_weight: 0.5
-    max_notional: 1000
+    max_notional: 500
     pair_type: "long_short"
 
   - base: BTCUSDT
     alt: ADAUSDT
     ema_window: 15
     allocation_weight: 0.5
-    max_notional: 1000
+    max_notional: 500
     pair_type: "long_short"
 
   # Additional Cross-Asset Pairs for Diversification
@@ -41,14 +41,14 @@ pairs:
     alt: AVAXUSDT
     ema_window: 14
     allocation_weight: 0.3
-    max_notional: 500          # $500 for secondary pairs
+    max_notional: 300          # $300 for secondary pairs
     pair_type: "long_short"
 
   - base: SOLUSDT
     alt: ADAUSDT
     ema_window: 16
     allocation_weight: 0.3
-    max_notional: 500
+    max_notional: 300
     pair_type: "long_short"
 
 strategy:
@@ -136,8 +136,8 @@ futures:
   include_funding: true
   funding_frequency: 8
 
-# Capital - Real demo account balance
-initial_capital: 10868.98            # Your actual demo account balance
+# Capital - Unified across all modes for exact replication
+initial_capital: 10000               # IDENTICAL across backtest, test, and live modes
 
 backtest:
   start_date: "2020-01-01"
@@ -150,6 +150,18 @@ execution:
   slippage: 0.0005                   # IDENTICAL to backtest
   fees: 0.0004                       # IDENTICAL to backtest
 
+  # Advanced Execution Engine Configuration
+  advanced_execution:
+    enabled: true                    # Enable smart execution algorithms
+    execution_algorithm: "adaptive"  # adaptive, smart_limit, twap, iceberg, market
+    max_position_slippage: 0.002     # Maximum 20bps slippage allowed
+    twap_duration: 300               # 5 minutes for TWAP execution
+    iceberg_chunk_size: 0.1          # 10% chunks for large orders
+    liquidity_threshold: 10000       # Minimum $10k liquidity required
+    spread_threshold: 0.001          # 10bps spread threshold
+    volume_impact_factor: 0.0001     # Market impact factor
+    aggressive_threshold: 0.05       # When to use aggressive execution (5%)
+
   # Mode-specific execution settings - PERFECTLY ALIGNED
   test_mode:
     interval: "1d"                   # IDENTICAL frequency to backtest
@@ -157,12 +169,12 @@ execution:
     check_frequency_minutes: 60      # Hourly checks for demo trading
     position_size_multiplier: 1.0    # IDENTICAL size to backtest
     use_spot_trading: false          # Use futures like backtest
-    simulate_execution: true         # Enhanced simulation with real prices
-    track_positions: true            # Track simulated positions
-    use_public_data: true            # Use public market data
-    demo_balance: 100000             # Realistic demo account balance ($100k)
-    simulation_only: true            # Enhanced simulation mode
-    force_demo_signals: true         # Generate demo signals for testing
+    simulate_execution: false        # Place real demo orders
+    track_positions: true            # Track real demo positions
+    use_real_demo_api: true          # Use real demo trading API
+    enable_demo_trading: true        # Use exchange.enable_demo_trading(True)
+    simulation_only: false           # Real demo trading mode
+    force_demo_signals: false        # Disabled - use real signals only
 
   live_mode:
     interval: "1d"                   # IDENTICAL frequency to backtest
@@ -186,9 +198,10 @@ binance:
     testnet: false
     demo: true
     base_url: "https://api.binance.com"
-    api_key: "mGmsRCQEiDIr6e0Nk8hFlbKeykSCfGRF2Uv9l1U33rZdvtbKIUz7eVVwDCPcYVTT"
-    api_secret: "L0VLCBjYajuatQvPjjleNnmZi5d7WUSSGZsObxw4TskEP5gmbxSJgA6R8n6rDTa9"
+    api_key: "cXur5uynoGfICg5mviK7zJRpn2C4xIAgV9Ou7gY2075fc3XMMgRtPnOACU9VOJdu"
+    api_secret: "n3gu6IZrHP1WJRnYppKUqnTUjVnN8lXxmkLd8tM4eNazRIxdzv5v2R42dqSmxFP2"
     demo_trading: true         # Demo trading with real account
+    default_type: "delivery"   # Use COIN-M futures (crypto-margined)
 
   live_mode:
     testnet: false

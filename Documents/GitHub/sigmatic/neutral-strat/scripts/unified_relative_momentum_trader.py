@@ -37,6 +37,7 @@ from src.strategies.relative_momentum import (
     backtest_relative_momentum_pair,
     compute_metrics
 )
+from src.execution.advanced_execution import AdvancedExecutionEngine, ExecutionAlgorithm
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class TradingMode(Enum):
 class UnifiedRelativeMomentumTrader:
     """Unified trader that ensures perfect alignment across all modes"""
 
-    def __init__(self, mode: TradingMode, config_path: str = 'config/unified_trading_config.yaml'):
+    def __init__(self, mode: TradingMode, config_path: str = 'config/market_neutral_config.yaml'):
         """Initialize unified trader"""
         self.mode = mode
 
@@ -82,6 +83,14 @@ class UnifiedRelativeMomentumTrader:
 
         # Initialize tracking
         self._initialize_tracking()
+
+        # Initialize advanced execution engine for non-backtest modes
+        if self.mode != TradingMode.BACKTEST and self.exchange:
+            execution_config = self.config.get('execution', {}).get('advanced_execution', {})
+            self.execution_engine = AdvancedExecutionEngine(self.exchange, execution_config)
+            logger.info(f"🚀 Advanced execution engine initialized")
+        else:
+            self.execution_engine = None
 
         logger.info(f"✅ Unified Trader initialized in {self.mode.value.upper()} mode")
         logger.info(f"🎯 Strategy parameters IDENTICAL across all modes")
@@ -174,17 +183,20 @@ class UnifiedRelativeMomentumTrader:
             'secret': api_secret,
             'enableRateLimit': True,
             'options': {
-                'defaultType': 'future'  # Always use futures
+                'defaultType': binance_config.get('default_type', 'future')  # Support COIN-M futures
             }
         }
 
-        # Demo trading configuration
-        if binance_config.get('demo_trading'):
-            exchange_config['demo'] = True
-        elif binance_config.get('testnet', False):
-            exchange_config['sandbox'] = True
-
+        # Create exchange instance
         self.exchange = ccxt.binance(exchange_config)
+
+        # Enable demo trading if configured
+        if binance_config.get('demo_trading') and hasattr(self.exchange, 'enable_demo_trading'):
+            self.exchange.enable_demo_trading(True)
+            logger.info("Demo trading enabled using exchange.enable_demo_trading(True)")
+        elif binance_config.get('testnet', False):
+            # Fallback for older testnet mode
+            pass
 
         if self.mode == TradingMode.TEST and binance_config.get('demo_trading'):
             logger.info("Exchange initialized: Demo Trading (Futures Enabled)")
@@ -198,7 +210,7 @@ class UnifiedRelativeMomentumTrader:
         exchange_config = {
             'enableRateLimit': True,
             'options': {
-                'defaultType': 'future'  # Always use futures
+                'defaultType': 'future'  # Default to USDT-M for public data
             }
         }
 
@@ -409,9 +421,9 @@ class UnifiedRelativeMomentumTrader:
         """Generate signals using EXACT same logic across all modes"""
         signals = []
 
-        # Demo signal generation for testing
-        if self.config.get('execution', {}).get('force_demo_signals', False) and len(self.paper_positions) == 0:
-            return self._generate_demo_signal()
+        # Remove demo signal generation - use real signals only
+        # if self.config.get('execution', {}).get('force_demo_signals', False) and len(self.paper_positions) == 0:
+        #     return self._generate_demo_signal()
 
         try:
             for pair_config in self.pairs:
@@ -463,23 +475,58 @@ class UnifiedRelativeMomentumTrader:
                         alt_symbol: alt_data
                     }
 
-                    pair_signals = compute_relative_momentum_signals(
-                        pair_data,
-                        {'pairs': [pair_config]}
-                    )
+                    # Use appropriate strategy based on config
+                    strategy_type = self.strategy_params.get('type', 'relative_momentum')
+
+                    if strategy_type == 'market_neutral_pairs':
+                        from src.strategies.market_neutral_pairs import compute_market_neutral_signals
+                        pair_signals = compute_market_neutral_signals(
+                            pair_data,
+                            {'pairs': [pair_config], 'strategy': self.strategy_params}
+                        )
+                    else:
+                        from src.strategies.relative_momentum import compute_relative_momentum_signals
+                        pair_signals = compute_relative_momentum_signals(
+                            pair_data,
+                            {'pairs': [pair_config]}
+                        )
 
                     if pair_signals:
-                        # Add IDENTICAL metadata
-                        for signal in pair_signals:
-                            signal.update({
-                                'pair_name': pair_name,
+                        # Convert PairSignal objects to dictionary format
+                        for pair_signal in pair_signals:
+                            # Convert base signal to dict
+                            base_signal_dict = {
+                                'symbol': pair_signal.base_signal.symbol,
+                                'side': pair_signal.base_signal.side,
+                                'type': 'entry',
                                 'allocation_weight': pair_config['allocation_weight'],
                                 'max_notional': pair_config['max_notional'],
-                                'config': pair_config
-                            })
+                                'timestamp': pair_signal.base_signal.timestamp,
+                                'reason': pair_signal.entry_reason,
+                                'pair_name': pair_name,
+                                'config': pair_config,
+                                'confidence': pair_signal.base_signal.confidence,
+                                'metadata': pair_signal.base_signal.metadata
+                            }
 
-                        signals.extend(pair_signals)
-                        logger.info(f"📡 Generated {len(pair_signals)} signals for {pair_name}")
+                            # Convert hedge signal to dict
+                            hedge_signal_dict = {
+                                'symbol': pair_signal.hedge_signal.symbol,
+                                'side': pair_signal.hedge_signal.side,
+                                'type': 'entry',
+                                'allocation_weight': pair_config['allocation_weight'],
+                                'max_notional': pair_config['max_notional'],
+                                'timestamp': pair_signal.hedge_signal.timestamp,
+                                'reason': pair_signal.entry_reason,
+                                'pair_name': pair_name,
+                                'config': pair_config,
+                                'confidence': pair_signal.hedge_signal.confidence,
+                                'metadata': pair_signal.hedge_signal.metadata
+                            }
+
+                            signals.extend([base_signal_dict, hedge_signal_dict])
+
+                        logger.info(f"📡 Generated {len(pair_signals)} pair signals for {pair_name}")
 
                 except Exception as e:
                     logger.error(f"Error generating signals for {pair_name}: {e}")
@@ -508,7 +555,7 @@ class UnifiedRelativeMomentumTrader:
                 'side': 'long',
                 'type': 'entry',
                 'allocation_weight': 0.5,
-                'max_notional': 1000,
+                'max_notional': 500,
                 'timestamp': datetime.now(),
                 'reason': 'Demo signal for testing'
             }
@@ -584,6 +631,83 @@ class UnifiedRelativeMomentumTrader:
 
             logger.error(f"Error getting account balance: {e}")
             return {'total': 0.0, 'free': 0.0, 'used': 0.0}
+
+    def get_asset_positions(self) -> Dict:
+        """Get positions for all tracked assets (BTC, ETH, SOL, ADA, AVAX)"""
+        if self.mode == TradingMode.BACKTEST or self.exchange is None:
+            return {}
+
+        try:
+            positions = self.exchange.fetch_positions()
+            asset_positions = {}
+
+            # Track our main assets - support both USDT-M and COIN-M futures
+            tracked_patterns = [
+                # USDT-M futures
+                'BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'ADA/USDT', 'AVAX/USDT',
+                # COIN-M futures
+                'BTCUSD_PERP', 'ETHUSD_PERP', 'SOLUSD_PERP', 'ADAUSD_PERP', 'AVAXUSD_PERP'
+            ]
+
+            for position in positions:
+                symbol = position['symbol']
+
+                # Check if this is one of our tracked symbols and has a position
+                if any(pattern in symbol for pattern in tracked_patterns) and abs(float(position.get('contracts', position.get('size', 0)))) > 0:
+
+                    # Extract asset name from symbol
+                    if 'USD_PERP' in symbol:
+                        asset = symbol.replace('USD_PERP', '')
+                    elif 'USDT' in symbol:
+                        asset = symbol.split('/')[0] if '/' in symbol else symbol.replace('USDT', '')
+                    else:
+                        asset = symbol.split('USD')[0] if 'USD' in symbol else symbol
+
+                    # Use contracts for COIN-M, size for USDT-M
+                    position_size = float(position.get('contracts', position.get('size', 0)))
+
+                    asset_positions[asset] = {
+                        'size': position_size,
+                        'side': position.get('side', 'long' if position_size > 0 else 'short'),
+                        'entry_price': float(position.get('entryPrice', 0)),
+                        'mark_price': float(position.get('markPrice', 0)),
+                        'unrealized_pnl': float(position.get('unrealizedProfit', position.get('unrealizedPnl', 0))),
+                        'percentage': float(position.get('percentage', 0)),
+                        'symbol': symbol  # Keep original symbol for reference
+                    }
+
+            return asset_positions
+
+        except Exception as e:
+            logger.error(f"Error getting asset positions: {e}")
+            return {}
+
+    def get_wallet_balances(self) -> Dict:
+        """Get wallet balances for all tracked assets (BTC, ETH, SOL, ADA, AVAX)"""
+        if self.mode == TradingMode.BACKTEST or self.exchange is None:
+            return {}
+
+        try:
+            balance = self.exchange.fetch_balance()
+            tracked_assets = ['BTC', 'ETH', 'SOL', 'ADA', 'AVAX']
+            wallet_balances = {}
+
+            for asset in tracked_assets:
+                asset_balance = balance.get(asset, {})
+                if asset_balance:
+                    wallet_balances[asset] = {
+                        'free': float(asset_balance.get('free', 0.0)),
+                        'used': float(asset_balance.get('used', 0.0)),
+                        'total': float(asset_balance.get('total', 0.0))
+                    }
+                else:
+                    wallet_balances[asset] = {'free': 0.0, 'used': 0.0, 'total': 0.0}
+
+            return wallet_balances
+
+        except Exception as e:
+            logger.error(f"Error getting wallet balances: {e}")
+            return {}
 
     def execute_signal(self, signal: Dict) -> bool:
         """Execute signal with mode-appropriate method"""
@@ -694,7 +818,7 @@ class UnifiedRelativeMomentumTrader:
         self.unrealized_pnl = total_unrealized
 
     def _execute_live_signal(self, signal: Dict) -> bool:
-        """Execute signal on live/test exchange"""
+        """Execute signal on live/test exchange using advanced execution"""
         # For simulation mode, log and return success without executing
         if self.exchange is None:
             symbol = signal['symbol']
@@ -712,7 +836,7 @@ class UnifiedRelativeMomentumTrader:
             ticker = self.exchange.fetch_ticker(trading_symbol)
             current_price = ticker['last']
 
-            mode_indicator = "🧪 TEST" if self.config['binance']['testnet'] else "🔴 LIVE"
+            mode_indicator = "🧪 TEST" if self.config['binance'].get('testnet', False) else "🔴 LIVE"
             logger.info(f"{mode_indicator}: Executing {signal_type} {side} {symbol} @ ${current_price:.2f}")
 
             if signal_type == 'entry':
@@ -721,53 +845,128 @@ class UnifiedRelativeMomentumTrader:
                 if size <= 0:
                     return False
 
-                # Place order
-                if side == 'long':
-                    order = self.exchange.create_market_buy_order(trading_symbol, size)
+                # Prepare execution signal for advanced engine
+                execution_signal = {
+                    'symbol': trading_symbol,
+                    'side': side,
+                    'size': size,
+                    'urgency': signal.get('urgency', 'normal'),
+                    'original_signal': signal
+                }
+
+                # Use advanced execution engine if available
+                if self.execution_engine:
+                    execution_result = self.execution_engine.execute_trade(execution_signal)
+
+                    if execution_result.get('status') in ['closed', 'partial']:
+                        executed_price = execution_result.get('executed_price', current_price)
+                        executed_size = execution_result.get('order', {}).get('filled', size)
+
+                        logger.info(f"✅ Advanced execution completed")
+                        logger.info(f"   Algorithm: {execution_result.get('algorithm', 'unknown')}")
+                        logger.info(f"   Price: ${executed_price:.2f}")
+                        logger.info(f"   Size: {executed_size:.6f}")
+
+                        if 'slippage' in execution_result:
+                            slippage_bps = execution_result['slippage'] * 10000
+                            logger.info(f"   Slippage: {slippage_bps:.1f}bps")
+
+                        self.positions[symbol] = {
+                            'side': side,
+                            'size': executed_size,
+                            'entry_price': executed_price,
+                            'entry_time': datetime.now(),
+                            'execution_result': execution_result
+                        }
+
+                        self.total_trades += 1
+                        self.successful_trades += 1
+                        return True
                 else:
-                    order = self.exchange.create_market_sell_order(trading_symbol, size)
+                    # Fallback to market order if no advanced engine
+                    if side == 'long':
+                        order = self.exchange.create_market_buy_order(trading_symbol, size)
+                    else:
+                        order = self.exchange.create_market_sell_order(trading_symbol, size)
 
-                if order:
-                    logger.info(f"✅ Entry order executed: {order['id']}")
+                    if order:
+                        logger.info(f"✅ Market order executed: {order['id']}")
 
-                    self.positions[symbol] = {
-                        'side': side,
-                        'size': size,
-                        'entry_price': current_price,
-                        'entry_time': datetime.now(),
-                        'order_id': order['id']
-                    }
+                        self.positions[symbol] = {
+                            'side': side,
+                            'size': size,
+                            'entry_price': current_price,
+                            'entry_time': datetime.now(),
+                            'order_id': order['id']
+                        }
 
-                    self.total_trades += 1
-                    self.successful_trades += 1
-                    return True
+                        self.total_trades += 1
+                        self.successful_trades += 1
+                        return True
 
             elif signal_type == 'exit':
                 if symbol in self.positions:
                     position = self.positions[symbol]
+                    position_size = position['size']
 
-                    if position['side'] == 'long':
-                        order = self.exchange.create_market_sell_order(trading_symbol, position['size'])
+                    # Prepare exit signal
+                    exit_signal = {
+                        'symbol': trading_symbol,
+                        'side': 'sell' if position['side'] == 'long' else 'buy',
+                        'size': position_size,
+                        'urgency': 'high',  # Exits are usually urgent
+                        'original_signal': signal
+                    }
+
+                    # Use advanced execution for exit
+                    if self.execution_engine:
+                        execution_result = self.execution_engine.execute_trade(exit_signal)
+
+                        if execution_result.get('status') in ['closed', 'partial']:
+                            exit_price = execution_result.get('executed_price', current_price)
+
+                            # Calculate P&L
+                            entry_price = position['entry_price']
+                            if position['side'] == 'long':
+                                pnl = (exit_price - entry_price) * position_size
+                            else:
+                                pnl = (entry_price - exit_price) * position_size
+
+                            self.daily_pnl += pnl
+
+                            logger.info(f"✅ Advanced exit completed")
+                            logger.info(f"   Algorithm: {execution_result.get('algorithm', 'unknown')}")
+                            logger.info(f"   Exit Price: ${exit_price:.2f}")
+                            logger.info(f"   P&L: ${pnl:.2f}")
+
+                            del self.positions[symbol]
+                            self.total_trades += 1
+                            self.successful_trades += 1
+                            return True
                     else:
-                        order = self.exchange.create_market_buy_order(trading_symbol, position['size'])
-
-                    if order:
-                        # Calculate P&L
-                        entry_price = position['entry_price']
+                        # Fallback to market order
                         if position['side'] == 'long':
-                            pnl = (current_price - entry_price) * position['size']
+                            order = self.exchange.create_market_sell_order(trading_symbol, position_size)
                         else:
-                            pnl = (entry_price - current_price) * position['size']
+                            order = self.exchange.create_market_buy_order(trading_symbol, position_size)
 
-                        self.daily_pnl += pnl
+                        if order:
+                            # Calculate P&L
+                            entry_price = position['entry_price']
+                            if position['side'] == 'long':
+                                pnl = (current_price - entry_price) * position_size
+                            else:
+                                pnl = (entry_price - current_price) * position_size
 
-                        logger.info(f"✅ Exit order executed: {order['id']}")
-                        logger.info(f"   P&L: ${pnl:.2f}")
+                            self.daily_pnl += pnl
 
-                        del self.positions[symbol]
-                        self.total_trades += 1
-                        self.successful_trades += 1
-                        return True
+                            logger.info(f"✅ Market exit executed: {order['id']}")
+                            logger.info(f"   P&L: ${pnl:.2f}")
+
+                            del self.positions[symbol]
+                            self.total_trades += 1
+                            self.successful_trades += 1
+                            return True
 
         except Exception as e:
             logger.error(f"Error executing signal: {e}")
@@ -784,7 +983,7 @@ class UnifiedRelativeMomentumTrader:
 
         # Use the same config file but ensure backtest mode
         results = run_relative_momentum_backtest(
-            config_path='config/unified_trading_config.yaml'
+            config_path='config/market_neutral_config.yaml'
         )
 
         logger.info("📊 Backtest completed with unified parameters")
@@ -874,6 +1073,24 @@ class UnifiedRelativeMomentumTrader:
             for symbol, pos in self.positions.items():
                 logger.info(f"  {symbol}: {pos['side']} {pos['size']:.6f}")
 
+        # Show wallet balances for all tracked assets
+        wallet_balances = self.get_wallet_balances()
+        if wallet_balances:
+            logger.info(f"💰 Wallet Balances:")
+            for asset, balance in wallet_balances.items():
+                logger.info(f"  {asset}: {balance['total']:.6f} (Free: {balance['free']:.6f}, Used: {balance['used']:.6f})")
+
+        # Show asset positions for all tracked assets
+        asset_positions = self.get_asset_positions()
+        if asset_positions:
+            logger.info(f"💼 Asset Positions:")
+            for asset, pos in asset_positions.items():
+                pnl_sign = "+" if pos['unrealized_pnl'] >= 0 else ""
+                logger.info(f"  {asset}: {pos['side']} {abs(pos['size']):.6f} @ ${pos['entry_price']:.2f} | Mark: ${pos['mark_price']:.2f} | PnL: {pnl_sign}${pos['unrealized_pnl']:.2f} ({pnl_sign}{pos['percentage']:.2f}%)")
+        else:
+            # Show zero positions for tracked assets
+            logger.info(f"💼 Asset Positions: All positions closed (BTC: 0, ETH: 0, SOL: 0, ADA: 0, AVAX: 0)")
+
         logger.info(f"{'='*60}")
 
     def _shutdown(self):
@@ -928,7 +1145,7 @@ def main():
     parser.add_argument('--mode', type=str, choices=['backtest', 'test', 'live'],
                        required=True, help='Trading mode')
     parser.add_argument('--config', type=str,
-                       default='config/unified_trading_config.yaml',
+                       default='config/market_neutral_config.yaml',
                        help='Configuration file path')
 
     args = parser.parse_args()

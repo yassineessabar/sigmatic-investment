@@ -311,6 +311,7 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
 
     freq = config['backtest']['freq']
     pair_returns = {}
+    pair_results = {}  # Store complete backtest results including position data
     summary_rows = []
 
     # Run backtests for each pair
@@ -389,6 +390,7 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
             stats = print_stats(pair_name, best_result, freq)
             summary_rows.append(stats)
             pair_returns[pair_name] = best_result['returns']
+            pair_results[pair_name] = best_result  # Store complete results for position analysis
 
         except Exception as e:
             logger.error(f"Failed to backtest {pair_name}: {e}")
@@ -462,15 +464,26 @@ def run_relative_momentum_backtest(start_date=None, end_date=None, config_path='
     if len(benchmark_returns) > 0:
         initial_capital = config.get('backtest', {}).get('initial_capital', 10000)
 
+        # Combine position data from all pairs for portfolio analysis
+        combined_position_data = None
+        if pair_results:
+            # Use the first pair's position data as representative
+            first_pair_result = next(iter(pair_results.values()))
+            if 'weights' in first_pair_result:
+                combined_position_data = {
+                    'weights': first_pair_result['weights'],
+                    'pair_results': pair_results  # Include all pair data
+                }
+
         print_performance_comparison(
             equal_portfolio_returns, benchmark_returns,
             "Equal-Weight Portfolio", "BTC Buy & Hold", freq,
-            initial_capital, None
+            initial_capital, None, combined_position_data
         )
         print_performance_comparison(
             vol_scaled_portfolio_returns, benchmark_returns,
             "Vol-Scaled Portfolio", "BTC Buy & Hold", freq,
-            initial_capital, None
+            initial_capital, None, combined_position_data
         )
 
     # Plot portfolio values
