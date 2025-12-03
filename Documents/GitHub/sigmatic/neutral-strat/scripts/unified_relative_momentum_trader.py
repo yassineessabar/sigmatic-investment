@@ -596,6 +596,14 @@ class UnifiedRelativeMomentumTrader:
 
             # Calculate position size
             position_size = target_notional / current_price
+
+            # Ensure minimum notional requirement for live/test orders (Binance requires $100 minimum)
+            if self.mode != TradingMode.BACKTEST:
+                min_notional = 100  # Binance minimum notional
+                if target_notional < min_notional:
+                    logger.warning(f"Order too small: ${target_notional:.2f} < ${min_notional}. Adjusting to minimum.")
+                    position_size = min_notional / current_price
+
             return round(position_size, 6)
 
         except Exception as e:
@@ -842,7 +850,10 @@ class UnifiedRelativeMomentumTrader:
             if signal_type == 'entry':
                 size = self.calculate_position_size(signal, current_price)
 
+                logger.info(f"[D] Calculated position size: {size} for {symbol}")
+
                 if size <= 0:
+                    logger.warning(f"[!] Invalid position size: {size} for {symbol}")
                     return False
 
                 # Prepare execution signal for advanced engine
@@ -854,8 +865,8 @@ class UnifiedRelativeMomentumTrader:
                     'original_signal': signal
                 }
 
-                # Use advanced execution engine if available
-                if self.execution_engine:
+                # Use advanced execution engine if available (but prefer simple orders for demo)
+                if self.execution_engine and self.mode != TradingMode.TEST:
                     logger.info(f"[E] Using advanced execution engine for {side} {symbol}")
                     execution_result = self.execution_engine.execute_trade(execution_signal)
 
@@ -894,15 +905,31 @@ class UnifiedRelativeMomentumTrader:
                     logger.info(f"[M] Using fallback market order for {side} {symbol}")
 
                     try:
-                        if side == 'long':
-                            order = self.exchange.create_market_buy_order(trading_symbol, size)
-                        else:
-                            order = self.exchange.create_market_sell_order(trading_symbol, size)
+                        # Use generic create_order for better demo trading compatibility
+                        order_side = 'buy' if side == 'long' else 'sell'
+                        order = self.exchange.create_order(
+                            symbol=trading_symbol,
+                            type='market',
+                            side=order_side,
+                            amount=size
+                        )
 
                         logger.info(f"[M] Market order result: {order}")
 
                         if order:
-                            logger.info(f"[+] Market order executed: {order['id']}")
+                            logger.info(f"[+] Market order executed successfully!")
+                            logger.info(f"   Order ID: {order['id']}")
+                            logger.info(f"   Symbol: {order['symbol']}")
+                            logger.info(f"   Side: {order['side']}")
+                            logger.info(f"   Amount: {order['amount']}")
+                            logger.info(f"   Status: {order['status']}")
+                            logger.info(f"   Timestamp: {order.get('datetime', 'N/A')}")
+
+                            # Calculate actual notional
+                            filled_amount = order.get('filled', order['amount'])
+                            avg_price = order.get('average') or order.get('price', current_price)
+                            notional = filled_amount * avg_price
+                            logger.info(f"   Notional: ${notional:.2f}")
 
                             self.positions[symbol] = {
                                 'side': side,
@@ -918,7 +945,18 @@ class UnifiedRelativeMomentumTrader:
                         else:
                             logger.error(f"[!] Market order returned None/False")
                     except Exception as e:
+                        error_msg = str(e)
                         logger.error(f"[!] Market order execution failed: {e}")
+
+                        # Provide specific guidance for common errors
+                        if "notional must be no smaller than" in error_msg:
+                            logger.error(f"[!] Order too small - minimum notional required is $100")
+                        elif "insufficient balance" in error_msg.lower():
+                            logger.error(f"[!] Insufficient balance - check account funding")
+                        elif "symbol" in error_msg.lower():
+                            logger.error(f"[!] Invalid symbol - check symbol format: {trading_symbol}")
+
+                        return False
 
             elif signal_type == 'exit':
                 if symbol in self.positions:
@@ -961,10 +999,13 @@ class UnifiedRelativeMomentumTrader:
                             return True
                     else:
                         # Fallback to market order
-                        if position['side'] == 'long':
-                            order = self.exchange.create_market_sell_order(trading_symbol, position_size)
-                        else:
-                            order = self.exchange.create_market_buy_order(trading_symbol, position_size)
+                        exit_side = 'sell' if position['side'] == 'long' else 'buy'
+                        order = self.exchange.create_order(
+                            symbol=trading_symbol,
+                            type='market',
+                            side=exit_side,
+                            amount=position_size
+                        )
 
                         if order:
                             # Calculate P&L
@@ -1125,10 +1166,13 @@ class UnifiedRelativeMomentumTrader:
             try:
                 trading_symbol = self.convert_to_trading_symbol(symbol)
 
-                if position['side'] == 'long':
-                    order = self.exchange.create_market_sell_order(trading_symbol, position['size'])
-                else:
-                    order = self.exchange.create_market_buy_order(trading_symbol, position['size'])
+                exit_side = 'sell' if position['side'] == 'long' else 'buy'
+                order = self.exchange.create_order(
+                    symbol=trading_symbol,
+                    type='market',
+                    side=exit_side,
+                    amount=position['size']
+                )
 
                 logger.info(f"Closed position {symbol}: {order['id']}")
 
