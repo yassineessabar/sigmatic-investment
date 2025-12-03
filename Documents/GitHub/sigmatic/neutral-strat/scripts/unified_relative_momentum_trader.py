@@ -88,12 +88,12 @@ class UnifiedRelativeMomentumTrader:
         if self.mode != TradingMode.BACKTEST and self.exchange:
             execution_config = self.config.get('execution', {}).get('advanced_execution', {})
             self.execution_engine = AdvancedExecutionEngine(self.exchange, execution_config)
-            logger.info(f"🚀 Advanced execution engine initialized")
+            logger.info(f"[!] Advanced execution engine initialized")
         else:
             self.execution_engine = None
 
         logger.info(f"✅ Unified Trader initialized in {self.mode.value.upper()} mode")
-        logger.info(f"🎯 Strategy parameters IDENTICAL across all modes")
+        logger.info(f"[*] Strategy parameters IDENTICAL across all modes")
 
     def _apply_mode_config(self):
         """Apply mode-specific configuration while preserving strategy identity"""
@@ -399,7 +399,7 @@ class UnifiedRelativeMomentumTrader:
 
     def update_market_data(self):
         """Update market data - IDENTICAL process for all modes"""
-        logger.info("📊 Updating market data...")
+        logger.info("[+] Updating market data...")
 
         for symbol in self.universe:
             # Fetch price data
@@ -526,7 +526,7 @@ class UnifiedRelativeMomentumTrader:
 
                             signals.extend([base_signal_dict, hedge_signal_dict])
 
-                        logger.info(f"📡 Generated {len(pair_signals)} pair signals for {pair_name}")
+                        logger.info(f"[>] Generated {len(pair_signals)} pair signals for {pair_name}")
 
                 except Exception as e:
                     logger.error(f"Error generating signals for {pair_name}: {e}")
@@ -560,7 +560,7 @@ class UnifiedRelativeMomentumTrader:
                 'reason': 'Demo signal for testing'
             }
 
-            logger.info(f"🎯 DEMO: Generated test signal for {symbol} @ ${current_price:.2f}")
+            logger.info(f"[*] DEMO: Generated test signal for {symbol} @ ${current_price:.2f}")
             return [demo_signal]
 
         except Exception as e:
@@ -721,7 +721,7 @@ class UnifiedRelativeMomentumTrader:
     def _simulate_signal_execution(self, signal: Dict) -> bool:
         """Simulate signal execution for backtest"""
         # This would integrate with your existing backtest execution logic
-        logger.info(f"📊 BACKTEST: Simulated execution of {signal.get('symbol', 'Unknown')}")
+        logger.info(f"[+] BACKTEST: Simulated execution of {signal.get('symbol', 'Unknown')}")
         return True
 
     def _simulate_paper_trading(self, signal: Dict) -> bool:
@@ -733,7 +733,7 @@ class UnifiedRelativeMomentumTrader:
 
             # Get real market price
             if not self.exchange:
-                logger.info(f"📄 PAPER TRADING: {signal_type} {side} {symbol} (no price data)")
+                logger.info(f"[P] PAPER TRADING: {signal_type} {side} {symbol} (no price data)")
                 return True
 
             trading_symbol = self.convert_to_trading_symbol(symbol)
@@ -758,7 +758,7 @@ class UnifiedRelativeMomentumTrader:
                 self.total_trades += 1
                 self.successful_trades += 1
 
-                logger.info(f"📄 PAPER ENTRY: {side} {size:.6f} {symbol} @ ${current_price:.2f}")
+                logger.info(f"[P] PAPER ENTRY: {side} {size:.6f} {symbol} @ ${current_price:.2f}")
 
             elif signal_type == 'exit' and symbol in self.paper_positions:
                 # Close position and calculate P&L
@@ -775,7 +775,7 @@ class UnifiedRelativeMomentumTrader:
                 self.total_pnl += pnl
                 self.current_balance += pnl
 
-                logger.info(f"📄 PAPER EXIT: {position['side']} {symbol} @ ${current_price:.2f} | P&L: ${pnl:.2f}")
+                logger.info(f"[P] PAPER EXIT: {position['side']} {symbol} @ ${current_price:.2f} | P&L: ${pnl:.2f}")
 
                 # Remove position
                 del self.paper_positions[symbol]
@@ -824,7 +824,7 @@ class UnifiedRelativeMomentumTrader:
             symbol = signal['symbol']
             side = signal['side']
             signal_type = signal.get('type', 'unknown')
-            logger.info(f"🧪 SIMULATION: Would execute {signal_type} {side} {symbol}")
+            logger.info(f"[S] SIMULATION: Would execute {signal_type} {side} {symbol}")
             return True
 
         try:
@@ -856,13 +856,17 @@ class UnifiedRelativeMomentumTrader:
 
                 # Use advanced execution engine if available
                 if self.execution_engine:
+                    logger.info(f"[E] Using advanced execution engine for {side} {symbol}")
                     execution_result = self.execution_engine.execute_trade(execution_signal)
+
+                    logger.info(f"[E] Execution result status: {execution_result.get('status', 'unknown')}")
+                    logger.info(f"[E] Full execution result: {execution_result}")
 
                     if execution_result.get('status') in ['closed', 'partial']:
                         executed_price = execution_result.get('executed_price', current_price)
                         executed_size = execution_result.get('order', {}).get('filled', size)
 
-                        logger.info(f"✅ Advanced execution completed")
+                        logger.info(f"[+] Advanced execution completed")
                         logger.info(f"   Algorithm: {execution_result.get('algorithm', 'unknown')}")
                         logger.info(f"   Price: ${executed_price:.2f}")
                         logger.info(f"   Size: {executed_size:.6f}")
@@ -882,27 +886,39 @@ class UnifiedRelativeMomentumTrader:
                         self.total_trades += 1
                         self.successful_trades += 1
                         return True
+                    else:
+                        logger.warning(f"[!] Execution failed or incomplete. Status: {execution_result.get('status')}")
+                        logger.warning(f"[!] Error: {execution_result.get('error', 'No error message')}")
                 else:
                     # Fallback to market order if no advanced engine
-                    if side == 'long':
-                        order = self.exchange.create_market_buy_order(trading_symbol, size)
-                    else:
-                        order = self.exchange.create_market_sell_order(trading_symbol, size)
+                    logger.info(f"[M] Using fallback market order for {side} {symbol}")
 
-                    if order:
-                        logger.info(f"✅ Market order executed: {order['id']}")
+                    try:
+                        if side == 'long':
+                            order = self.exchange.create_market_buy_order(trading_symbol, size)
+                        else:
+                            order = self.exchange.create_market_sell_order(trading_symbol, size)
 
-                        self.positions[symbol] = {
-                            'side': side,
-                            'size': size,
-                            'entry_price': current_price,
-                            'entry_time': datetime.now(),
-                            'order_id': order['id']
-                        }
+                        logger.info(f"[M] Market order result: {order}")
 
-                        self.total_trades += 1
-                        self.successful_trades += 1
-                        return True
+                        if order:
+                            logger.info(f"[+] Market order executed: {order['id']}")
+
+                            self.positions[symbol] = {
+                                'side': side,
+                                'size': size,
+                                'entry_price': current_price,
+                                'entry_time': datetime.now(),
+                                'order_id': order['id']
+                            }
+
+                            self.total_trades += 1
+                            self.successful_trades += 1
+                            return True
+                        else:
+                            logger.error(f"[!] Market order returned None/False")
+                    except Exception as e:
+                        logger.error(f"[!] Market order execution failed: {e}")
 
             elif signal_type == 'exit':
                 if symbol in self.positions:
@@ -975,7 +991,7 @@ class UnifiedRelativeMomentumTrader:
 
     def run_backtest(self):
         """Run backtest mode using existing backtest logic"""
-        logger.info("📊 Running backtest with unified parameters...")
+        logger.info("[+] Running backtest with unified parameters...")
 
         # This would call your existing backtest functions
         # but with the unified configuration ensuring identical parameters
@@ -986,12 +1002,12 @@ class UnifiedRelativeMomentumTrader:
             config_path='config/market_neutral_config.yaml'
         )
 
-        logger.info("📊 Backtest completed with unified parameters")
+        logger.info("[+] Backtest completed with unified parameters")
         return results
 
     def run_live_trading(self):
         """Run live trading loop"""
-        logger.info(f"🚀 Starting {self.mode.value} trading with unified parameters...")
+        logger.info(f"[!] Starting {self.mode.value} trading with unified parameters...")
 
         # Record starting balance
         balance = self.get_account_balance()
@@ -1005,7 +1021,7 @@ class UnifiedRelativeMomentumTrader:
                 cycle_count += 1
                 cycle_start = datetime.now()
 
-                logger.info(f"\n🔄 Cycle #{cycle_count} - {cycle_start}")
+                logger.info(f"\n[@] Cycle #{cycle_count} - {cycle_start}")
 
                 # 1. Update market data with IDENTICAL logic
                 self.update_market_data()
@@ -1014,7 +1030,7 @@ class UnifiedRelativeMomentumTrader:
                 signals = self.generate_signals()
 
                 if signals:
-                    logger.info(f"📡 Generated {len(signals)} signals")
+                    logger.info(f"[>] Generated {len(signals)} signals")
 
                     # 3. Execute signals
                     for signal in signals:
@@ -1022,13 +1038,13 @@ class UnifiedRelativeMomentumTrader:
                         if success and self.mode != TradingMode.BACKTEST:
                             time.sleep(1)
                 else:
-                    logger.info("📡 No signals generated")
+                    logger.info("[>] No signals generated")
 
                 # 4. Log status
                 self._log_status()
 
                 # 5. Sleep until next check
-                logger.info(f"⏰ Next check in {check_frequency} minutes...")
+                logger.info(f"[T] Next check in {check_frequency} minutes...")
                 time.sleep(check_frequency * 60)
 
         except KeyboardInterrupt:
@@ -1043,59 +1059,59 @@ class UnifiedRelativeMomentumTrader:
         balance = self.get_account_balance()
         runtime = datetime.now() - self.start_time
 
-        mode_symbol = {"backtest": "📊", "test": "🧪", "live": "🔴"}[self.mode.value]
+        mode_symbol = {"backtest": "[+]", "test": "[T]", "live": "[L]"}[self.mode.value]
 
         logger.info(f"\n{'='*60}")
         logger.info(f"{mode_symbol} {self.mode.value.upper()} TRADING STATUS")
         logger.info(f"{'='*60}")
-        logger.info(f"🕒 Runtime: {runtime}")
-        logger.info(f"💰 Balance: ${balance.get('total', 0):,.2f}")
-        logger.info(f"🔄 Trades: {self.total_trades}")
-        logger.info(f"✅ Success Rate: {(self.successful_trades/max(1,self.total_trades)*100):.1f}%")
+        logger.info(f"[T] Runtime: {runtime}")
+        logger.info(f"[$] Balance: ${balance.get('total', 0):,.2f}")
+        logger.info(f"[@] Trades: {self.total_trades}")
+        logger.info(f"[%] Success Rate: {(self.successful_trades/max(1,self.total_trades)*100):.1f}%")
 
         # Show paper trading specific info
         if hasattr(self, 'paper_positions') and self.paper_positions:
-            logger.info(f"📍 Paper Positions: {len(self.paper_positions)}")
+            logger.info(f"[P] Paper Positions: {len(self.paper_positions)}")
             for symbol, pos in self.paper_positions.items():
                 unrealized = pos.get('unrealized_pnl', 0.0)
                 logger.info(f"  {symbol}: {pos['side']} {pos['size']:.6f} @ ${pos['entry_price']:.2f} (P&L: ${unrealized:.2f})")
 
         # Show P&L summary for paper trading
         if hasattr(self, 'total_pnl'):
-            logger.info(f"💹 Realized P&L: ${self.total_pnl:.2f}")
+            logger.info(f"[R] Realized P&L: ${self.total_pnl:.2f}")
             if hasattr(self, 'unrealized_pnl'):
-                logger.info(f"📊 Unrealized P&L: ${self.unrealized_pnl:.2f}")
-                logger.info(f"🎯 Total P&L: ${self.total_pnl + self.unrealized_pnl:.2f}")
+                logger.info(f"[U] Unrealized P&L: ${self.unrealized_pnl:.2f}")
+                logger.info(f"[=] Total P&L: ${self.total_pnl + self.unrealized_pnl:.2f}")
 
         # Legacy positions for live trading
         if self.positions:
-            logger.info(f"📍 Live Positions: {len(self.positions)}")
+            logger.info(f"[L] Live Positions: {len(self.positions)}")
             for symbol, pos in self.positions.items():
                 logger.info(f"  {symbol}: {pos['side']} {pos['size']:.6f}")
 
         # Show wallet balances for all tracked assets
         wallet_balances = self.get_wallet_balances()
         if wallet_balances:
-            logger.info(f"💰 Wallet Balances:")
+            logger.info(f"[$] Wallet Balances:")
             for asset, balance in wallet_balances.items():
                 logger.info(f"  {asset}: {balance['total']:.6f} (Free: {balance['free']:.6f}, Used: {balance['used']:.6f})")
 
         # Show asset positions for all tracked assets
         asset_positions = self.get_asset_positions()
         if asset_positions:
-            logger.info(f"💼 Asset Positions:")
+            logger.info(f"[A] Asset Positions:")
             for asset, pos in asset_positions.items():
                 pnl_sign = "+" if pos['unrealized_pnl'] >= 0 else ""
                 logger.info(f"  {asset}: {pos['side']} {abs(pos['size']):.6f} @ ${pos['entry_price']:.2f} | Mark: ${pos['mark_price']:.2f} | PnL: {pnl_sign}${pos['unrealized_pnl']:.2f} ({pnl_sign}{pos['percentage']:.2f}%)")
         else:
             # Show zero positions for tracked assets
-            logger.info(f"💼 Asset Positions: All positions closed (BTC: 0, ETH: 0, SOL: 0, ADA: 0, AVAX: 0)")
+            logger.info(f"[A] Asset Positions: All positions closed (BTC: 0, ETH: 0, SOL: 0, ADA: 0, AVAX: 0)")
 
         logger.info(f"{'='*60}")
 
     def _shutdown(self):
         """Graceful shutdown"""
-        logger.info(f"🛑 Shutting down {self.mode.value} trader...")
+        logger.info(f"[X] Shutting down {self.mode.value} trader...")
 
         if self.positions and self.mode != TradingMode.BACKTEST:
             # Close positions for live/test modes
@@ -1125,7 +1141,7 @@ class UnifiedRelativeMomentumTrader:
         total_return = final_balance - self.start_balance
         return_pct = (total_return / self.start_balance) * 100 if self.start_balance > 0 else 0
 
-        logger.info(f"\n📈 FINAL PERFORMANCE ({self.mode.value.upper()}):")
+        logger.info(f"\n[=] FINAL PERFORMANCE ({self.mode.value.upper()}):")
         logger.info(f"  Starting Balance: ${self.start_balance:,.2f}")
         logger.info(f"  Final Balance: ${final_balance:,.2f}")
         logger.info(f"  Total Return: ${total_return:,.2f} ({return_pct:.2f}%)")
