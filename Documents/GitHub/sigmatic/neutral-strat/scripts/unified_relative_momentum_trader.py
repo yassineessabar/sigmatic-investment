@@ -92,7 +92,7 @@ class UnifiedRelativeMomentumTrader:
         else:
             self.execution_engine = None
 
-        logger.info(f"✅ Unified Trader initialized in {self.mode.value.upper()} mode")
+        logger.info(f"[+] Unified Trader initialized in {self.mode.value.upper()} mode")
         logger.info(f"[*] Strategy parameters IDENTICAL across all modes")
 
     def _apply_mode_config(self):
@@ -119,45 +119,45 @@ class UnifiedRelativeMomentumTrader:
     def _show_mode_info(self):
         """Show mode information and alignment confirmation"""
         print(f"\n{'='*60}")
-        print(f"🎯 UNIFIED RELATIVE MOMENTUM TRADER")
+        print(f"[*] UNIFIED RELATIVE MOMENTUM TRADER")
         print(f"{'='*60}")
         print(f"Mode: {self.mode.value.upper()}")
 
         if self.mode == TradingMode.BACKTEST:
-            print("📊 BACKTEST MODE - Historical simulation")
+            print("[+] BACKTEST MODE - Historical simulation")
         elif self.mode == TradingMode.TEST:
             if self.config['binance']['testnet_mode'].get('demo_trading', False):
-                print("🧪 TEST MODE - Demo Trading with fake money")
-                print("🔒 SAFE: Uses Binance Demo Trading (Futures Enabled)")
+                print("[T] TEST MODE - Demo Trading with fake money")
+                print("[S] SAFE: Uses Binance Demo Trading (Futures Enabled)")
             else:
-                print("🧪 TEST MODE - Testnet with fake money")
-                print("🔒 SAFE: Uses Binance testnet")
+                print("[T] TEST MODE - Testnet with fake money")
+                print("[S] SAFE: Uses Binance testnet")
         elif self.mode == TradingMode.LIVE:
-            print("🔴 LIVE MODE - Real money trading")
-            print("⚠️  WARNING: Uses real money")
+            print("[!] LIVE MODE - Real money trading")
+            print("[!] WARNING: Uses real money")
 
         # Show strategy alignment
-        print(f"\n🎯 STRATEGY ALIGNMENT:")
+        print(f"\n[*] STRATEGY ALIGNMENT:")
         print(f"  Pairs: {len(self.config['pairs'])} pairs")
         print(f"  Strategy: {self.config['strategy']['type']}")
         print(f"  Risk: {self.config['risk']['max_position_size']*100:.0f}% max position")
         print(f"  Optimization: {self.config['strategy']['optimization']['enabled']}")
         print(f"  Futures: {self.config['futures']['enabled']}")
-        print(f"\n✅ IDENTICAL strategy logic across all modes")
+        print(f"\n[+] IDENTICAL strategy logic across all modes")
         print(f"{'='*60}")
 
     def _require_live_confirmation(self):
         """Require explicit confirmation for live trading"""
-        print(f"\n🔴 LIVE TRADING CONFIRMATION REQUIRED")
-        print(f"⚠️  This will trade with REAL MONEY")
-        print(f"⚠️  Make sure you have tested thoroughly first")
+        print(f"\n[!] LIVE TRADING CONFIRMATION REQUIRED")
+        print(f"[!] This will trade with REAL MONEY")
+        print(f"[!] Make sure you have tested thoroughly first")
 
         confirmation = input("Type 'CONFIRMED' to proceed with live trading: ").strip()
         if confirmation != "CONFIRMED":
-            print("❌ Live trading cancelled for safety")
+            print("[X] Live trading cancelled for safety")
             sys.exit(1)
 
-        print("🔴 Live trading confirmed - starting with real money")
+        print("[!] Live trading confirmed - starting with real money")
 
     def _initialize_exchange(self):
         """Initialize exchange for test or live modes"""
@@ -844,7 +844,7 @@ class UnifiedRelativeMomentumTrader:
             ticker = self.exchange.fetch_ticker(trading_symbol)
             current_price = ticker['last']
 
-            mode_indicator = "🧪 TEST" if self.config['binance'].get('testnet', False) else "🔴 LIVE"
+            mode_indicator = "[T] TEST" if self.config['binance'].get('testnet', False) else "[L] LIVE"
             logger.info(f"{mode_indicator}: Executing {signal_type} {side} {symbol} @ ${current_price:.2f}")
 
             if signal_type == 'entry':
@@ -988,7 +988,7 @@ class UnifiedRelativeMomentumTrader:
 
                             self.daily_pnl += pnl
 
-                            logger.info(f"✅ Advanced exit completed")
+                            logger.info(f"[+] Advanced exit completed")
                             logger.info(f"   Algorithm: {execution_result.get('algorithm', 'unknown')}")
                             logger.info(f"   Exit Price: ${exit_price:.2f}")
                             logger.info(f"   P&L: ${pnl:.2f}")
@@ -1017,7 +1017,7 @@ class UnifiedRelativeMomentumTrader:
 
                             self.daily_pnl += pnl
 
-                            logger.info(f"✅ Market exit executed: {order['id']}")
+                            logger.info(f"[+] Market exit executed: {order['id']}")
                             logger.info(f"   P&L: ${pnl:.2f}")
 
                             del self.positions[symbol]
@@ -1214,8 +1214,8 @@ def main():
         # Convert mode string to enum
         mode = TradingMode(args.mode)
 
-        print(f"🎯 Starting Unified Trader in {mode.value.upper()} mode")
-        print("✅ GUARANTEED: Identical strategy parameters across all modes")
+        print(f"[*] Starting Unified Trader in {mode.value.upper()} mode")
+        print("[+] GUARANTEED: Identical strategy parameters across all modes")
 
         trader = UnifiedRelativeMomentumTrader(mode, args.config)
         trader.run()
