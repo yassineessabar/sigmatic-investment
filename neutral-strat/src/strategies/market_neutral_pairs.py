@@ -26,8 +26,13 @@ def compute_market_neutral_signals(data: Dict[str, pd.DataFrame], config: Dict) 
     2. Minimizes correlation with BTC through dynamic hedging
     3. Uses cross-asset pairs for diversification
     4. Implements correlation-based position sizing
+    5. Generates exit signals for position closing
     """
     signals = []
+
+    # Initialize position tracking (simple state-based)
+    if not hasattr(compute_market_neutral_signals, 'positions'):
+        compute_market_neutral_signals.positions = {}
 
     # Calculate BTC returns for correlation control
     btc_returns = data.get('BTCUSDT', pd.DataFrame()).get('close', pd.Series()).pct_change()
@@ -113,7 +118,60 @@ def compute_market_neutral_signals(data: Dict[str, pd.DataFrame], config: Dict) 
         current_signal = 1 if current_ratio > current_ema else -1
         prev_signal = 1 if prev_ratio > prev_ema else -1
 
-        # Only trade on signal changes to reduce correlation
+        # Check for existing positions
+        existing_position = compute_market_neutral_signals.positions.get(pair_name)
+
+        # Generate exit signals first if position exists and signal changed
+        if existing_position and current_signal != prev_signal:
+            # Close existing positions
+            exit_base_signal = Signal(
+                symbol=base_symbol,
+                side='close',
+                size=existing_position['base_size'],
+                price=base_price,
+                timestamp=current_time,
+                confidence=1.0,
+                metadata={
+                    'relative_ratio': current_ratio,
+                    'ema_ratio': current_ema,
+                    'market_neutral': True,
+                    'pair_type': 'market_neutral',
+                    'action': 'exit'
+                }
+            )
+
+            exit_alt_signal = Signal(
+                symbol=alt_symbol,
+                side='close',
+                size=existing_position['alt_size'],
+                price=alt_price,
+                timestamp=current_time,
+                confidence=1.0,
+                metadata={
+                    'relative_ratio': current_ratio,
+                    'ema_ratio': current_ema,
+                    'market_neutral': True,
+                    'pair_type': 'market_neutral',
+                    'action': 'exit'
+                }
+            )
+
+            exit_reason = f"Market Neutral Exit: {pair_name} signal changed from {prev_signal} to {current_signal}"
+
+            exit_pair_signal = PairSignal(
+                base_signal=exit_base_signal,
+                hedge_signal=exit_alt_signal,
+                pair_name=pair_name,
+                spread_zscore=abs(current_ratio - current_ema) / current_ema,
+                entry_reason=exit_reason
+            )
+
+            signals.append(exit_pair_signal)
+
+            # Clear the position
+            del compute_market_neutral_signals.positions[pair_name]
+
+        # Generate entry signals on signal changes
         if current_signal != prev_signal:
 
             # Market neutral positioning - always long one, short the other
@@ -158,7 +216,8 @@ def compute_market_neutral_signals(data: Dict[str, pd.DataFrame], config: Dict) 
                     'ema_ratio': current_ema,
                     'weight': base_weight,
                     'market_neutral': True,
-                    'pair_type': 'market_neutral'
+                    'pair_type': 'market_neutral',
+                    'action': 'entry'
                 }
             )
 
@@ -174,11 +233,12 @@ def compute_market_neutral_signals(data: Dict[str, pd.DataFrame], config: Dict) 
                     'ema_ratio': current_ema,
                     'weight': alt_weight,
                     'market_neutral': True,
-                    'pair_type': 'market_neutral'
+                    'pair_type': 'market_neutral',
+                    'action': 'entry'
                 }
             )
 
-            entry_reason = f"Market Neutral: {base_symbol} {base_side}/{alt_symbol} {alt_side} (ratio {current_ratio:.6f} vs EMA {current_ema:.6f})"
+            entry_reason = f"Market Neutral Entry: {base_symbol} {base_side}/{alt_symbol} {alt_side} (ratio {current_ratio:.6f} vs EMA {current_ema:.6f})"
 
             pair_signal = PairSignal(
                 base_signal=base_signal,
@@ -189,6 +249,16 @@ def compute_market_neutral_signals(data: Dict[str, pd.DataFrame], config: Dict) 
             )
 
             signals.append(pair_signal)
+
+            # Track the new position
+            compute_market_neutral_signals.positions[pair_name] = {
+                'base_side': base_side,
+                'base_size': base_position_size,
+                'alt_side': alt_side,
+                'alt_size': alt_position_size,
+                'entry_time': current_time,
+                'signal': current_signal
+            }
 
     return signals
 
