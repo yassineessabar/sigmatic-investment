@@ -492,11 +492,15 @@ class UnifiedRelativeMomentumTrader:
                     if pair_signals:
                         # Convert PairSignal objects to dictionary format
                         for pair_signal in pair_signals:
+                            # Determine signal type based on side
+                            base_signal_type = 'exit' if pair_signal.base_signal.side == 'close' else 'entry'
+                            hedge_signal_type = 'exit' if pair_signal.hedge_signal.side == 'close' else 'entry'
+
                             # Convert base signal to dict
                             base_signal_dict = {
                                 'symbol': pair_signal.base_signal.symbol,
                                 'side': pair_signal.base_signal.side,
-                                'type': 'entry',
+                                'type': base_signal_type,
                                 'allocation_weight': pair_config['allocation_weight'],
                                 'max_notional': pair_config['max_notional'],
                                 'timestamp': pair_signal.base_signal.timestamp,
@@ -511,7 +515,7 @@ class UnifiedRelativeMomentumTrader:
                             hedge_signal_dict = {
                                 'symbol': pair_signal.hedge_signal.symbol,
                                 'side': pair_signal.hedge_signal.side,
-                                'type': 'entry',
+                                'type': hedge_signal_type,
                                 'allocation_weight': pair_config['allocation_weight'],
                                 'max_notional': pair_config['max_notional'],
                                 'timestamp': pair_signal.hedge_signal.timestamp,
@@ -563,15 +567,23 @@ class UnifiedRelativeMomentumTrader:
             # Apply mode-specific multiplier
             target_notional *= multiplier
 
-            # Calculate position size
-            position_size = target_notional / current_price
-
             # Ensure minimum notional requirement for live/test orders (Binance requires $100 minimum)
             if self.mode != TradingMode.BACKTEST:
                 min_notional = 100  # Binance minimum notional
                 if target_notional < min_notional:
                     logger.warning(f"Order too small: ${target_notional:.2f} < ${min_notional}. Adjusting to minimum.")
-                    position_size = min_notional / current_price
+                    target_notional = min_notional
+
+            # Calculate position size
+            position_size = target_notional / current_price
+
+            logger.info(f"[D] Position calculation for {signal.get('symbol', 'Unknown')}:")
+            logger.info(f"   Available Capital: ${available_capital:,.2f}")
+            logger.info(f"   Allocation Weight: {allocation_weight}")
+            logger.info(f"   Max Position Size: {self.risk_params['max_position_size']}")
+            logger.info(f"   Target Notional: ${target_notional:.2f}")
+            logger.info(f"   Current Price: ${current_price:.2f}")
+            logger.info(f"   Position Size: {position_size:.6f}")
 
             return round(position_size, 6)
 
@@ -592,13 +604,64 @@ class UnifiedRelativeMomentumTrader:
 
         try:
             balance = self.exchange.fetch_balance()
-            usdt_balance = balance.get('USDT', {})
 
-            return {
-                'total': usdt_balance.get('total', 0.0),
-                'free': usdt_balance.get('free', 0.0),
-                'used': usdt_balance.get('used', 0.0)
-            }
+            # Check if using COIN-M futures (crypto-margined) vs USDT-M futures
+            default_type = self.config.get('binance', {}).get('testnet_mode', {}).get('default_type', 'future')
+
+            if default_type == 'delivery':
+                # COIN-M futures: Calculate total value of crypto assets
+                total_value_usdt = 0.0
+                free_value_usdt = 0.0
+
+                # Get current prices for crypto assets
+                crypto_assets = ['BTC', 'ETH', 'SOL', 'ADA', 'AVAX']
+
+                for asset in crypto_assets:
+                    asset_balance = balance.get(asset, {})
+                    total_amount = asset_balance.get('total', 0.0)
+                    free_amount = asset_balance.get('free', 0.0)
+
+                    if total_amount > 0:
+                        try:
+                            # Get current price in USDT (try different symbol formats)
+                            symbol_variations = [
+                                f'{asset}/USDT',      # Spot symbol
+                                f'{asset}USDT',       # Delivery symbol
+                                f'{asset}/USDT:USDT'  # USDT-M futures symbol
+                            ]
+
+                            current_price = None
+                            for symbol_format in symbol_variations:
+                                try:
+                                    ticker = self.exchange.fetch_ticker(symbol_format)
+                                    current_price = ticker['last']
+                                    break
+                                except:
+                                    continue
+
+                            if current_price:
+                                total_value_usdt += total_amount * current_price
+                                free_value_usdt += free_amount * current_price
+                            else:
+                                logger.warning(f"Could not get price for {asset} with any symbol format")
+
+                        except Exception as price_error:
+                            logger.warning(f"Could not get price for {asset}: {price_error}")
+
+                return {
+                    'total': total_value_usdt,
+                    'free': free_value_usdt,
+                    'used': total_value_usdt - free_value_usdt
+                }
+
+            else:
+                # USDT-M futures: Use USDT balance directly
+                usdt_balance = balance.get('USDT', {})
+                return {
+                    'total': usdt_balance.get('total', 0.0),
+                    'free': usdt_balance.get('free', 0.0),
+                    'used': usdt_balance.get('used', 0.0)
+                }
 
         except Exception as e:
             # For public data mode, just return simulation balance
