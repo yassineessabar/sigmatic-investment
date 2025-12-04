@@ -609,19 +609,21 @@ class UnifiedRelativeMomentumTrader:
             default_type = self.config.get('binance', {}).get('testnet_mode', {}).get('default_type', 'future')
 
             if default_type == 'delivery':
-                # COIN-M futures: Calculate total value of crypto assets
-                total_value_usdt = 0.0
-                free_value_usdt = 0.0
+                # COIN-M futures: Use marginBalance from assets info (like Binance GUI)
+                total_margin_usdt = 0.0
+                available_margin_usdt = 0.0
 
-                # Get current prices for crypto assets
-                crypto_assets = ['BTC', 'ETH', 'SOL', 'ADA', 'AVAX']
+                # Get assets info which contains marginBalance values
+                assets_info = balance.get('info', {}).get('assets', [])
 
-                for asset in crypto_assets:
-                    asset_balance = balance.get(asset, {})
-                    total_amount = asset_balance.get('total', 0.0)
-                    free_amount = asset_balance.get('free', 0.0)
+                logger.info(f"[D] COIN-M Futures balance calculation from {len(assets_info)} assets")
 
-                    if total_amount > 0:
+                for asset_info in assets_info:
+                    asset = asset_info.get('asset', '')
+                    margin_balance = float(asset_info.get('marginBalance', 0))
+                    available_balance = float(asset_info.get('availableBalance', 0))
+
+                    if margin_balance > 0:
                         try:
                             # Get current price in USDT (try different symbol formats)
                             symbol_variations = [
@@ -640,18 +642,26 @@ class UnifiedRelativeMomentumTrader:
                                     continue
 
                             if current_price:
-                                total_value_usdt += total_amount * current_price
-                                free_value_usdt += free_amount * current_price
+                                margin_usdt = margin_balance * current_price
+                                available_usdt = available_balance * current_price
+
+                                total_margin_usdt += margin_usdt
+                                available_margin_usdt += available_usdt
+
+                                if margin_usdt > 10:  # Only log significant balances
+                                    logger.info(f"   {asset}: {margin_balance:.4f} @ ${current_price:.2f} = ${margin_usdt:.2f}")
                             else:
-                                logger.warning(f"Could not get price for {asset} with any symbol format")
+                                logger.warning(f"Could not get price for {asset}")
 
                         except Exception as price_error:
                             logger.warning(f"Could not get price for {asset}: {price_error}")
 
+                logger.info(f"[D] Total USDT equivalent: ${total_margin_usdt:.2f} (Available: ${available_margin_usdt:.2f})")
+
                 return {
-                    'total': total_value_usdt,
-                    'free': free_value_usdt,
-                    'used': total_value_usdt - free_value_usdt
+                    'total': total_margin_usdt,
+                    'free': available_margin_usdt,
+                    'used': total_margin_usdt - available_margin_usdt
                 }
 
             else:
