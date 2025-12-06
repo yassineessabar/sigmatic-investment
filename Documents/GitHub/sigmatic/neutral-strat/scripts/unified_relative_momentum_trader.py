@@ -609,31 +609,10 @@ class UnifiedRelativeMomentumTrader:
             default_type = self.config.get('binance', {}).get('testnet_mode', {}).get('default_type', 'future')
 
             if default_type == 'delivery':
-                # COIN-M futures: Try to get USDT balance from spot account first
-                try:
-                    # Create temporary spot exchange to get USDT balance
-                    spot_exchange = ccxt.binance({
-                        'apiKey': self.exchange.apiKey,
-                        'secret': self.exchange.secret,
-                        'sandbox': False,
-                        'options': {'defaultType': 'spot'}
-                    })
-                    spot_exchange.enable_demo_trading(True)
+                # COIN-M futures: Get balance directly from the same exchange where trading occurs
+                logger.info(f"[D] Getting balance from COIN-M futures (same as trading exchange)")
 
-                    spot_balance = spot_exchange.fetch_balance()
-                    usdt_spot = spot_balance.get('USDT', {})
-
-                    if usdt_spot and usdt_spot.get('total', 0) > 0:
-                        logger.info(f"[D] Using SPOT USDT balance: ${usdt_spot.get('total', 0):,.2f}")
-                        return {
-                            'total': usdt_spot.get('total', 0.0),
-                            'free': usdt_spot.get('free', 0.0),
-                            'used': usdt_spot.get('used', 0.0)
-                        }
-                except Exception as spot_error:
-                    logger.warning(f"Could not get spot USDT balance: {spot_error}")
-
-                # Fallback: Use marginBalance from assets info (like Binance GUI)
+                # Use the current exchange balance (COIN-M futures)
                 total_margin_usdt = 0.0
                 available_margin_usdt = 0.0
 
