@@ -137,12 +137,12 @@ futures:
   funding_frequency: 8
 
 # Capital - Unified across all modes for exact replication
-initial_capital: 10000               # IDENTICAL across backtest, test, and live modes
+initial_capital: 100000              # $100k IDENTICAL across backtest, test, and live modes
 
 backtest:
   start_date: "2020-01-01"
   end_date: "2024-12-31"
-  initial_capital: 10000             # IDENTICAL to live/test modes
+  initial_capital: 100000            # $100k IDENTICAL to live/test modes
   freq: 365
 
 execution:
