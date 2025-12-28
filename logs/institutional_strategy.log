@@ -1,0 +1,2 @@
+2025-11-30 10:26:51 - root - INFO - Logging configured successfully
+2025-11-30 10:27:36 - __main__ - WARNING - Failed to create audit trail version: [Errno 2] No such file or directory: 'config/institutional_sharpe_config.yaml'

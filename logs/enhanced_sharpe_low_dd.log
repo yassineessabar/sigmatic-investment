@@ -1,0 +1,4 @@
+2025-11-30 10:38:05 - root - INFO - Logging configured successfully
+2025-11-30 10:38:46 - __main__ - ERROR - Failed to backtest BTCUSDT/AVAX: No valid backtest results
+2025-11-30 10:38:46 - __main__ - ERROR - Failed to backtest BTCUSDT/ADA: No valid backtest results
+2025-11-30 10:38:46 - __main__ - ERROR - No successful backtests completed
