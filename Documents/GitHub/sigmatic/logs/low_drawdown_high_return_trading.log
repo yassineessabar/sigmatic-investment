@@ -1,0 +1,2 @@
+2025-11-30 10:19:21 - root - INFO - Logging configured successfully
+2025-11-30 10:20:08 - __main__ - WARNING - Failed to create audit trail version: [Errno 2] No such file or directory: 'audit_trail/versions/v20251130_060711_sharpe_2p40/config_v20251130_060711_sharpe_2p40.yaml'

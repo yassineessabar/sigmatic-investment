@@ -1,0 +1,4 @@
+2025-11-30 10:00:33 - root - INFO - Logging configured successfully
+2025-11-30 10:01:20 - __main__ - WARNING - Failed to create audit trail version: [Errno 2] No such file or directory: 'audit_trail/versions/v20251130_054559_sharpe_2p47/config_v20251130_054559_sharpe_2p47.yaml'
+2025-11-30 10:13:30 - root - INFO - Logging configured successfully
+2025-11-30 10:14:13 - __main__ - WARNING - Failed to create audit trail version: [Errno 2] No such file or directory: 'audit_trail/versions/v20251130_054559_sharpe_2p47/config_v20251130_054559_sharpe_2p47.yaml'

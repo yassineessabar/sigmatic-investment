@@ -1,0 +1,15 @@
+{
+  "strategies": [],
+  "best_sharpe": {
+    "value": -999,
+    "version": null
+  },
+  "best_calmar": {
+    "value": -999,
+    "version": null
+  },
+  "lowest_drawdown": {
+    "value": -1,
+    "version": null
+  }
+}

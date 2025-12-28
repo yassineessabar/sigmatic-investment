@@ -286,11 +286,25 @@ class UnifiedRelativeMomentumTrader:
 
     def fetch_market_data(self, symbol: str, lookback_days: int = 200) -> pd.DataFrame:
         """Fetch market data - IDENTICAL format for all modes"""
-        if self.mode == TradingMode.BACKTEST:
-            # For backtest, use historical data loading
-            return self._load_historical_data(symbol, lookback_days)
+        # ALIGNED: Try to use historical data first for consistency, then live data
+        historical_data = self._load_historical_data(symbol, lookback_days)
+
+        if not historical_data.empty and self.mode != TradingMode.BACKTEST:
+            # For live/test modes, use recent historical data + current live data for consistency
+            # This ensures we use the same data quality as backtest
+            live_data = self._fetch_current_data(symbol, min(10, lookback_days))
+            if not live_data.empty:
+                # Combine historical and recent live data, avoiding duplicates
+                combined_data = pd.concat([historical_data[:-5], live_data]).drop_duplicates()
+                combined_data = combined_data.sort_index().tail(lookback_days)
+                logger.info(f"[*] ALIGNED data for {symbol}: {len(combined_data)} candles (historical + live)")
+                return combined_data
+
+        if self.mode == TradingMode.BACKTEST or not historical_data.empty:
+            # For backtest or when historical data is available
+            return historical_data
         else:
-            # For test/live, fetch current data
+            # Fallback to live data only
             return self._fetch_current_data(symbol, lookback_days)
 
     def _load_historical_data(self, symbol: str, lookback_days: int) -> pd.DataFrame:
@@ -448,21 +462,36 @@ class UnifiedRelativeMomentumTrader:
                 try:
                     # Use EXACT same signal generation logic as backtest
                     if self.strategy_params['optimization']['enabled']:
-                        # Use optimized EMA window
+                        # ALIGNED: Use SAME optimization logic for ALL modes
                         window_range = range(
                             self.strategy_params['optimization']['window_range_start'],
                             self.strategy_params['optimization']['window_range_end']
                         )
 
-                        # For live/test modes, use a simplified optimization or fixed window
-                        # to avoid over-optimization during live trading
-                        if self.mode != TradingMode.BACKTEST:
-                            # Use the configured EMA window for live/test
-                            ema_window = pair_config['ema_window']
-                        else:
-                            # Use full optimization for backtest
-                            # This would require implementing live optimization
-                            ema_window = pair_config['ema_window']
+                        # FIXED: Use full optimization for ALL modes to ensure identical signals
+                        from src.strategies.relative_momentum import optimize_ema_window
+
+                        # Get funding data for optimization
+                        base_funding = self.funding_data.get(base_symbol, pd.DataFrame())
+                        alt_funding = self.funding_data.get(alt_symbol, pd.DataFrame())
+
+                        # Use IDENTICAL optimization as backtest
+                        optimization_result = optimize_ema_window(
+                            base_data,
+                            alt_data,
+                            window_range,
+                            pair_config['allocation_weight'],
+                            self.config['execution']['fees'],
+                            self.config['execution']['slippage'],
+                            self.config['backtest']['freq'],
+                            base_funding,
+                            alt_funding,
+                            self.strategy_params['enhancements']['enabled'],
+                            self.strategy_params['optimization']['metric']
+                        )
+                        ema_window = optimization_result['ema_window']
+
+                        logger.info(f"[*] ALIGNED optimization for {pair_name}: EMA window = {ema_window}d")
                     else:
                         ema_window = pair_config['ema_window']
 

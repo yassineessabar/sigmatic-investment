@@ -1,0 +1,4 @@
+2025-11-30 10:39:08 - root - INFO - Logging configured successfully
+2025-11-30 10:39:50 - __main__ - WARNING - Failed to create audit trail version: [Errno 2] No such file or directory: 'config/optimal_sharpe_v3_config.yaml'
+2025-11-30 10:47:20 - root - INFO - Logging configured successfully
+2025-11-30 10:47:48 - __main__ - WARNING - Failed to create audit trail version: [Errno 2] No such file or directory: 'config/optimal_sharpe_v3_config.yaml'

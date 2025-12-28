@@ -90,18 +90,18 @@ execution:
     mode: "backtest"
 
   test_mode:
-    interval: "1h"              # Hourly checks for testing
+    interval: "1d"              # ALIGNED: Daily like backtest
     mode: "paper"
-    check_frequency_minutes: 60 # Check every hour
-    position_size_multiplier: 0.01  # Use 1% of normal size for safe testing
-    use_spot_trading: true      # Use spot instead of futures for testing
+    check_frequency_minutes: 1440 # ALIGNED: Check daily (24*60 minutes)
+    position_size_multiplier: 1.0  # ALIGNED: Full size like backtest
+    use_spot_trading: false     # ALIGNED: Use futures like backtest
     simulate_execution: true    # Pure simulation mode
 
   live_mode:
-    interval: "1d"              # Daily like backtest
+    interval: "1d"              # ALIGNED: Daily like backtest
     mode: "live"
-    check_frequency_minutes: 120   # Check every 2 hours
-    position_size_multiplier: 1.0  # Full size for live
+    check_frequency_minutes: 1440   # ALIGNED: Check daily like backtest
+    position_size_multiplier: 1.0  # ALIGNED: Full size like backtest
     confirmation_required: true
 
 # =====================================================

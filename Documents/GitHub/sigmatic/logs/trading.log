@@ -1,0 +1,8 @@
+2025-11-29 13:19:47 - root - INFO - Logging configured successfully
+2025-11-29 13:19:47 - __main__ - INFO - ✅ Unified Trader initialized in BACKTEST mode
+2025-11-29 13:19:47 - __main__ - INFO - 🎯 Strategy parameters IDENTICAL across all modes
+2025-11-29 13:19:47 - __main__ - INFO - 📊 Running backtest with unified parameters...
+2025-11-29 13:19:47 - root - INFO - Logging configured successfully
+2025-11-29 13:20:23 - __main__ - INFO - 📊 Backtest completed with unified parameters
+2025-11-29 13:21:05 - root - INFO - Logging configured successfully
+2025-11-29 13:21:05 - root - ERROR - Failed to start unified trader: API credentials required: BINANCE_API_KEY and BINANCE_API_SECRET
