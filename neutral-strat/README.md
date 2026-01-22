@@ -2,7 +2,7 @@
 
 A unified cryptocurrency trading system that ensures **identical strategy parameters** across backtesting, demo testing, and live trading modes.
 
-## 🎯 Core Features
+## Core Features
 
 - **Perfect Strategy Alignment**: Same relative momentum logic across all modes
 - **Futures Trading**: Full futures support with funding cost integration
@@ -10,7 +10,7 @@ A unified cryptocurrency trading system that ensures **identical strategy parame
 - **Risk Management**: Built-in position sizing and risk controls
 - **24/7 Operation**: Automated signal generation and execution
 
-## 🚀 Quick Start
+## Installation and Setup
 
 ### 1. Install Dependencies
 ```bash
@@ -46,7 +46,7 @@ python3 scripts/unified_relative_momentum_trader.py --mode test --config config/
 python3 scripts/unified_relative_momentum_trader.py --mode live --config config/unified_trading_config.yaml
 ```
 
-## 📊 Strategy Overview
+## Strategy Overview
 
 The system implements a **relative momentum strategy** across cryptocurrency futures pairs:
 - **Pairs**: BTC/AVAX, BTC/ETH, BTC/SOL, BTC/ADA
@@ -54,18 +54,18 @@ The system implements a **relative momentum strategy** across cryptocurrency fut
 - **Risk Management**: 20% max position size, automatic stop-loss
 - **Optimization**: Dynamic EMA window optimization (1-30 days)
 
-## 🎯 Perfect Alignment Guarantee
+## Strategy Alignment
 
-All three modes use **identical**:
-- ✅ Strategy parameters and logic
-- ✅ Risk management rules
-- ✅ Position sizing calculations
-- ✅ Signal generation algorithms
-- ✅ Futures trading mechanics
+All three modes use identical:
+- Strategy parameters and logic
+- Risk management rules
+- Position sizing calculations
+- Signal generation algorithms
+- Futures trading mechanics
 
 Only the execution environment changes (historical data vs demo vs live).
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 neutral-strat/
@@ -85,7 +85,7 @@ neutral-strat/
 └── .env                                   # API credentials
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 The `config/unified_trading_config.yaml` file controls all settings:
 
@@ -95,14 +95,14 @@ The `config/unified_trading_config.yaml` file controls all settings:
 - **Execution**: Mode-specific execution settings
 - **Binance**: API endpoints and credentials
 
-## 🔒 Security
+## Security
 
 - Demo trading uses Binance's demo environment (fake money)
 - Live trading requires explicit confirmation
 - API credentials stored in `.env` file (not committed)
 - Built-in safety checks and position limits
 
-## 📈 Performance Tracking
+## Performance Tracking
 
 The system provides:
 - Real-time P&L tracking
@@ -111,14 +111,14 @@ The system provides:
 - Maximum drawdown monitoring
 - Detailed execution logs
 
-## 🛠️ Development
+## Technical Specifications
 
 - **Language**: Python 3.8+
 - **Key Libraries**: ccxt, pandas, numpy, matplotlib
 - **Exchange**: Binance (spot and futures)
 - **Data**: Real-time and historical OHLCV + funding rates
 
-## 📞 Support
+## Operations
 
 - Check logs in `logs/` directory for troubleshooting
 - Verify API credentials in Binance account
